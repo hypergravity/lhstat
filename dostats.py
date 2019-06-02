@@ -300,7 +300,7 @@ def plot_sky_goodness(tsky, sky, figfp_sky_brightness):
 
 #%%
 
-def plot_wind(ws, wd, figfp_wind):
+def plot_wind(ws, wd, ttws, figfp_wind):
     
     ind_day = isdaytime(ttws, t1)
     # last day
@@ -415,7 +415,7 @@ if __name__ == "__main__":
     
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
-    plot_wind(ws, wd, figfp_wind)
+    plot_wind(ws, wd, ttws, figfp_wind)
 
 
 
