@@ -1,5 +1,5 @@
-./latest_data
-./figs
+latest_data/
+figs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
