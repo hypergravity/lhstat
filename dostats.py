@@ -320,8 +320,8 @@ def plot_wind(ws, wd, ttws, figfp_wind):
     
     ax = fig.add_subplot(2,3,1)
     ax.hist(ws[ind_lastday], bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
-    ax.hist(ws[ind_lastday&~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="night")
     ax.hist(ws[ind_lastday&ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
+    ax.hist(ws[ind_lastday&~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="nighttime")
     ax.set_xlabel("Wind speed [m/s]")
     ax.set_ylabel("Counts")
     ax.set_title(date_last)
@@ -330,8 +330,8 @@ def plot_wind(ws, wd, ttws, figfp_wind):
     
     ax = fig.add_subplot(2,3,4)
     ax.hist(ws, bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
-    ax.hist(ws[~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="night")
     ax.hist(ws[ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
+    ax.hist(ws[~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="nighttime")
     ax.set_xlabel("Wind speed [m/s]")
     ax.set_ylabel("Counts")
     ax.set_title("All")
@@ -342,7 +342,7 @@ def plot_wind(ws, wd, ttws, figfp_wind):
     plt.scatter(wd[ind_lastday&ind_day],ws[ind_lastday&ind_day],s=10, c=np.abs(ttws.jd[ind_lastday&ind_day]-jd_lastmidnight)*24, cmap=plt.cm.jet, alpha=0.8, vmin=0, vmax=12)
     ca = plt.colorbar()
     ca.set_ticks([0,12])
-    ca.set_ticklabels(["night","daytime"])#, rotation=90)
+    ca.set_ticklabels(["nighttime","daytime"])#, rotation=90)
     ax.set_ylim(0, wsbins[-1])
     
     ax = fig.add_subplot(2,3,5, projection="polar")
@@ -369,7 +369,7 @@ def plot_wind(ws, wd, ttws, figfp_wind):
             statistic="count")
     l = ax.pcolormesh(mesh_wd, mesh_ws, np.log10(mesh_wc_night[0].T), cmap=plt.cm.hot_r, vmin=0, alpha=1)#, extent=(*grid_wd[[0,-1]], *grid_ws[[0,-1]]))
     plt.colorbar(l)
-    ax.set_title("log10(counts) [night]")
+    ax.set_title("log10(counts) [nighttime]")
     
     fig.tight_layout()
     fig.savefig(figfp_wind)
@@ -380,18 +380,43 @@ def plot_wind(ws, wd, ttws, figfp_wind):
 if __name__ == "__main__":
     
     year = 2019
-    dir_work = "/home/cham/lh" 
-    os.chdir(dir_work)    
     
-    # sunmoon data
-    datafp_sunmoon = "./sqm/lhsunmoon.dat"
+    if os.uname()[1] == "T7610":
+        
+        # working dir
+        dir_work = "/home/cham/lh" 
+        
+        # sunmoon data
+        datafp_sunmoon = "/home/cham/lh/sqm/lhsunmoon.dat"
+        # sky brightness data
+        datafp_sky = "/home/cham/lh/2019/SQMReadings.txt"
+        # wind data
+        datafp_wind = "/home/cham/lh/2019/weather2019.csv"
+        
+        # figure paths
+        figfp_sky_brightness = "/home/cham/PycharmProjects/lhstat/figs/latest_sky_brightness.png"
+        figfp_sky_goodness = "/home/cham/PycharmProjects/lhstat/figs/latest_sky_goodness_{}.png".format(year)
+        # wind figure
+        figfp_wind = "/home/cham/PycharmProjects/lhstat/figs/latest_wind_stat.png"
     
-    # sky brightness data
-    datafp_sky = "/home/cham/lh/2019/SQMReadings.txt"
-    
-    # figure paths
-    figfp_sky_brightness = "/home/cham/PycharmProjects/lhstat/figs/latest_sky_brightness.png"
-    figfp_sky_goodness = "/home/cham/PycharmProjects/lhstat/figs/latest_sky_goodness_{}.png".format(year)
+    else: # on ali server
+        # working dir
+        dir_work = "/root/lhstat"
+        
+        # sunmoon data
+        datafp_sunmoon = "./data/lhsunmoon.dat"
+        # sky brightness data
+        datafp_sky = "./latest_data/SQMReadings.txt"
+        # wind data
+        datafp_wind = "./latest_data/weather2019.csv"
+        
+        # figure paths
+        figfp_sky_brightness = "./figs/latest_sky_brightness.png"
+        figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
+        # wind figure
+        figfp_wind = "./figs/latest_wind_stat.png"
+        
+    os.chdir(dir_work)   
     
     # read sunmoon data
     t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
@@ -407,8 +432,6 @@ if __name__ == "__main__":
     plot_sky_goodness(tsky, sky, figfp_sky_goodness)
         
     # wind data
-    figfp_wind = "/home/cham/PycharmProjects/lhstat/figs/latest_wind_stat.png"
-    datafp_wind = "/home/cham/lh/2019/weather2019.csv"
     tws = Table.read(datafp_wind, format="ascii.commented_header")
     
     ttws = Time(["{}T{}:00".format(tws["date"][i],tws["time"][i]) for i in range(len(tws))])
@@ -416,6 +439,4 @@ if __name__ == "__main__":
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
     plot_wind(ws, wd, ttws, figfp_wind)
-
-
 
