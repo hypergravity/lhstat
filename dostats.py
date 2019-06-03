@@ -445,5 +445,5 @@ if __name__ == "__main__":
     
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
-    plot_wind(ws, wd, ttws, figfp_wind=None)
+    plot_wind(ws, wd, ttws, figfp_wind)
 

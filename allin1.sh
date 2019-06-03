@@ -10,5 +10,5 @@ bash update_data_ecs.sh
 ipython dostats.py
 
 # save a copy for today
-mkdir ./figs/`date +%Y%m%d`
+mkdir -p ./figs/`date +%Y%m%d`
 cp ./figs/*.png ./figs/`date +%Y%m%d`/
