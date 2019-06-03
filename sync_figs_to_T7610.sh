@@ -1,1 +1,1 @@
-scp -P 10415 root@101.201.57.57:/root/lhstat/figs/* /home/cham/PycharmProjects/lhstat/figs/
+scp -P 10415 -r root@101.201.57.57:/root/lhstat/figs/* /home/cham/PycharmProjects/lhstat/figs/
