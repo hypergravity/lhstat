@@ -299,8 +299,8 @@ def plot_sky_goodness(tsky, sky, figfp_sky_brightness):
     return 
 
 #%%
-
-def plot_wind(ws, wd, ttws, figfp_wind):
+from matplotlib import transforms
+def plot_wind(ws, wd, ttws, figfp_wind=None):
     
     ind_day = isdaytime(ttws, t1)
     # last day
@@ -344,6 +344,8 @@ def plot_wind(ws, wd, ttws, figfp_wind):
     ca.set_ticks([0,12])
     ca.set_ticklabels(["nighttime","daytime"])#, rotation=90)
     ax.set_ylim(0, wsbins[-1])
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
     
     ax = fig.add_subplot(2,3,5, projection="polar")
     grid_ws, grid_wd = wsbins,wdbins
@@ -357,6 +359,8 @@ def plot_wind(ws, wd, ttws, figfp_wind):
     l = ax.pcolormesh(mesh_wd, mesh_ws, np.log10(mesh_wc_day[0].T), cmap=plt.cm.hot_r, vmin=0, alpha=1)#, extent=(*grid_wd[[0,-1]], *grid_ws[[0,-1]]))
     plt.colorbar(l)
     ax.set_title("log10(counts) [daytime]")
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
     
     ax = fig.add_subplot(2,3,6, projection="polar")
     grid_ws, grid_wd = wsbins,wdbins
@@ -370,9 +374,12 @@ def plot_wind(ws, wd, ttws, figfp_wind):
     l = ax.pcolormesh(mesh_wd, mesh_ws, np.log10(mesh_wc_night[0].T), cmap=plt.cm.hot_r, vmin=0, alpha=1)#, extent=(*grid_wd[[0,-1]], *grid_ws[[0,-1]]))
     plt.colorbar(l)
     ax.set_title("log10(counts) [nighttime]")
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
     
     fig.tight_layout()
-    fig.savefig(figfp_wind)
+    if figfp_wind is not None:
+        fig.savefig(figfp_wind)
     return
     
 #%%
@@ -438,5 +445,5 @@ if __name__ == "__main__":
     
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
-    plot_wind(ws, wd, ttws, figfp_wind)
+    plot_wind(ws, wd, ttws, figfp_wind=None)
 
