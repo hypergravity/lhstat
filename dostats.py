@@ -39,6 +39,7 @@ from scipy import signal
 from scipy.stats import binned_statistic_2d
 from matplotlib import rcParams
 from matplotlib import pyplot as plt
+from astropy.table import Table
 rcParams.update({"font.size":15})
 
 #%%
@@ -120,7 +121,6 @@ def moving_std(x, n_pix=4):
 #%%
 
 """ read sky data """
-from astropy.table import Table
 #sky = Table.read("/home/cham/lh/sqm/SQMReadings_DLH.txt", format="ascii")
 def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
     """ read SQM data """
@@ -386,7 +386,8 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
 
 #%%
 from matplotlib import transforms
-def plot_wind_sub(ws, wd, ttws, figfp_wind=None):
+def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
+    _figsize = (7, 6)
     
     ind_day = isdaytime(ttws, t1)
     # last day
@@ -400,40 +401,43 @@ def plot_wind_sub(ws, wd, ttws, figfp_wind=None):
     jd_lastmidnight = jd_last+0.5
     
     wsbins = np.arange(0,26)
-    wdbins = np.linspace(0,2*np.pi,18)
+    wdp = np.copy(wd)
+    wdshift = 2*np.pi/nwdbins/2
+    wdp[wdp>(2*np.pi-wdshift)] -= 2*np.pi
+    wdpbins = np.linspace(0, 2*np.pi, nwdbins+1)-wdshift
     
-    fig = plt.figure(figsize=(5,5))
     # -----------------------------
+    fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111)
     ax.hist(ws[ind_lastday], bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
-    ax.hist(ws[ind_lastday&ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
+    #ax.hist(ws[ind_lastday&ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
     ax.hist(ws[ind_lastday&~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="nighttime")
     ax.set_xlabel("Wind speed [m/s]")
     ax.set_ylabel("Counts")
     ax.set_title(date_last)
     ax.set_xlim(wsbins[[0,-1]])
     ax.legend()
-    # -----------------------------
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_1.png"))
     
-    fig = plt.figure(figsize=(5,5))
+    
     # -----------------------------
+    fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111)
     ax.hist(ws, bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
-    ax.hist(ws[ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
+    #ax.hist(ws[ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
     ax.hist(ws[~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="nighttime")
     ax.set_xlabel("Wind speed [m/s]")
     ax.set_ylabel("Counts")
     ax.set_title("All")
     ax.set_xlim(wsbins[[0,-1]])
     ax.legend()
-    # -----------------------------
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_2.png"))
     
-    fig = plt.figure(figsize=(5,5))
+    
     # -----------------------------
+    fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111, projection="polar")
     plt.scatter(wd[ind_lastday&ind_day],ws[ind_lastday&ind_day],s=10, c=np.abs(ttws.jd[ind_lastday&ind_day]-jd_lastmidnight)*24, cmap=plt.cm.jet, alpha=0.8, vmin=0, vmax=12)
     ca = plt.colorbar()
@@ -442,17 +446,17 @@ def plot_wind_sub(ws, wd, ttws, figfp_wind=None):
     ax.set_ylim(0, wsbins[-1])
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
-    # -----------------------------
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_3.png"))
     
-    fig = plt.figure(figsize=(5,5))
+    
     # -----------------------------
+    fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111, projection="polar")
-    grid_ws, grid_wd = wsbins,wdbins
+    grid_ws, grid_wd = wsbins,wdpbins
     mesh_wd,mesh_ws = np.meshgrid(grid_wd,grid_ws)
     mesh_wc_day = binned_statistic_2d(
-            wd[ind_day], 
+            wdp[ind_day], 
             ws[ind_day], 
             ws[ind_day], 
             bins=(grid_wd,grid_ws),
@@ -462,17 +466,17 @@ def plot_wind_sub(ws, wd, ttws, figfp_wind=None):
     ax.set_title("log10(counts) [daytime]")
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
-    # -----------------------------
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_4.png"))
     
-    fig = plt.figure(figsize=(5,5))
+    
     # -----------------------------
+    fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111, projection="polar")
-    grid_ws, grid_wd = wsbins,wdbins
+    grid_ws, grid_wd = wsbins,wdpbins
     mesh_wd,mesh_ws = np.meshgrid(grid_wd,grid_ws)
     mesh_wc_night = binned_statistic_2d(
-            wd[~ind_day], 
+            wdp[~ind_day], 
             ws[~ind_day], 
             ws[~ind_day], 
             bins=(grid_wd,grid_ws),
@@ -482,12 +486,80 @@ def plot_wind_sub(ws, wd, ttws, figfp_wind=None):
     ax.set_title("log10(counts) [nighttime]")
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
-    # -----------------------------
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_5.png"))
     
     return
+
+
+#%%
+def plot_seeing(sws, tsws, figfp_seeing):
+    _figsize = (7, 6)
     
+    fig = plt.figure(figsize=_figsize)
+    ax = fig.add_subplot(111)
+    ax.hist(sws["seeing"], bins=np.linspace(0,3,31), histtype="bar")
+    ax.set_title("Seeing stat of SST")
+    ax.set_xlabel("Seeing (arcsec)")
+    ax.set_ylabel("Counts")
+    ax.set_xlim(0,3)
+    _ylim = ax.get_ylim()
+    ax.set_ylim(*_ylim)
+    ax.annotate("Median = {:.2f}\"".format(np.nanmedian(sws["seeing"])), xy=(0.5,0.7), xycoords="axes fraction", fontsize=20, horizontalalignment="left")
+    ax.annotate("Ntotal = {:d}".format(np.sum(np.isfinite(sws["seeing"]))), xy=(0.5,0.6), xycoords="axes fraction", fontsize=20, horizontalalignment="left")
+    ax.vlines(np.nanmedian(sws["seeing"]), *_ylim, colors="r", linestyles="solid")
+    fig.tight_layout()
+    fig.savefig(figfp_seeing.replace(".png", "_hist.png"))
+    
+    
+    fig = plt.figure(figsize=_figsize)
+    ax = fig.add_subplot(111)
+    # last day
+    fjd = np.floor(tsws.jd)
+    if np.mod(tsws.jd[-1],1) > 0.5:
+        jd_last = np.unique(fjd)[-1]
+    else:
+        jd_last = np.unique(fjd)[-2]
+    ind_lastday = fjd==jd_last
+    date_last = Time(jd_last,format="jd").isot[:10]
+    ax.plot(tsws.jd[ind_lastday]-jd_last, sws["seeing"][ind_lastday], "s-", alpha=0.5)
+    ax.set_xticks(np.linspace(0,1,25))
+    int_hours_ut = np.arange(25)+8
+    int_hours_ut[int_hours_ut>24]-=24
+    ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
+    ax.set_xlim(0.3,0.7)
+    ax.set_ylim(0,3)
+    ax.set_title("Seeing stat of SST [{}]".format(date_last))
+    ax.set_xlabel("Hour (UT)")
+    ax.set_ylabel("Seeing (arcsec)")
+    fig.tight_layout()
+    fig.savefig(figfp_seeing.replace(".png", "_last_seeing.png"))
+    
+    
+    fig = plt.figure(figsize=_figsize)
+    ax = fig.add_subplot(111)
+    # last day
+    fjd = np.floor(tsws.jd)
+    if np.mod(tsws.jd[-1],1) > 0.5:
+        jd_last = np.unique(fjd)[-1]
+    else:
+        jd_last = np.unique(fjd)[-2]
+    ind_lastday = fjd==jd_last
+    date_last = Time(jd_last,format="jd").isot[:10]
+    ax.plot(tsws.jd[ind_lastday]-jd_last, sws["col5"][ind_lastday], "s-", alpha=0.5)
+    ax.set_xticks(np.linspace(0,1,25))
+    int_hours_ut = np.arange(25)+8
+    int_hours_ut[int_hours_ut>24]-=24
+    ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
+    ax.set_xlim(0.3,0.7)
+    #ax.set_ylim(0,3)
+    ax.set_title("Flux stat of SST [{}]".format(date_last))
+    ax.set_xlabel("Hour (UT)")
+    ax.set_ylabel("Flux")
+    fig.tight_layout()
+    fig.savefig(figfp_seeing.replace(".png", "_last_flux.png"))
+    
+    return
     
 #%%
 
@@ -498,20 +570,24 @@ if __name__ == "__main__":
     if os.uname()[1] == "T7610":
         
         # working dir
-        dir_work = "/home/cham/lh" 
+        dir_work = "/home/cham/PycharmProjects/lhstat" 
         
         # sunmoon data
-        datafp_sunmoon = "/home/cham/lh/sqm/lhsunmoon.dat"
+        datafp_sunmoon = "./data/lhsunmoon.dat"
         # sky brightness data
-        datafp_sky = "/home/cham/lh/2019/SQMReadings.txt"
+        datafp_sky = "./latest_data/SQMReadings.txt"
         # wind data
-        datafp_wind = "/home/cham/lh/2019/weather2019.csv"
+        datafp_wind = "./latest_data/weather2019.csv"
+        # seeing data
+        datafp_seeing = "./latest_data/Seeing_Data.txt"
         
         # figure paths
-        figfp_sky_brightness = "/home/cham/PycharmProjects/lhstat/figs/latest_sky_brightness.png"
-        figfp_sky_goodness = "/home/cham/PycharmProjects/lhstat/figs/latest_sky_goodness_{}.png".format(year)
+        figfp_sky_brightness = "./figs/latest_sky_brightness.png"
+        figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
         # wind figure
-        figfp_wind = "/home/cham/PycharmProjects/lhstat/figs/latest_wind_stat.png"
+        figfp_wind = "./figs/latest_wind_stat.png"
+        # seeing figure
+        figfp_seeing = "./figs/latest_seeing_stat.png"
     
     else: # on ali server
         # working dir
@@ -523,36 +599,44 @@ if __name__ == "__main__":
         datafp_sky = "./latest_data/SQMReadings.txt"
         # wind data
         datafp_wind = "./latest_data/weather2019.csv"
+        # seeing data
+        datafp_seeing = "./latest_data/Seeing_Data.txt"
         
         # figure paths
         figfp_sky_brightness = "./figs/latest_sky_brightness.png"
         figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
         # wind figure
         figfp_wind = "./figs/latest_wind_stat.png"
+        # seeing figure
+        figfp_seeing = "./figs/latest_seeing_stat.png"
         
     os.chdir(dir_work)   
     
-    # read sunmoon data
+    """ read sunmoon data """
     t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
     
-    # read sky data
+    """ sky stats"""
     sky = read_sky(datafp_sky)
-        
-    # construct t_str for sky data
     sky_tstr = [(sky["YMD"][i]+"T"+sky["HMS"][i]).replace("/","-") for i in range(len(sky))]
     tsky = Time(sky_tstr)
     
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
     plot_sky_goodness(tsky, sky, figfp_sky_goodness)
         
-    # wind data
+    """ wind stats """
     tws = Table.read(datafp_wind, format="ascii.commented_header")
-    
     ttws = Time(["{}T{}:00".format(tws["date"][i],tws["time"][i]) for i in range(len(tws))])
     
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
     plot_wind(ws, wd, ttws, figfp_wind)
-    plot_wind_sub(ws, wd, ttws, figfp_wind)
+    plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=figfp_wind)
+    
+    """ seeing stats """
+    sws = Table.read(datafp_seeing, format="ascii.no_header", delimiter="|",
+                     names=['datetime1', 'datetime2', 'col3', 'col4', 'col5', 'seeing', 'col7', 'col8', 'col9'])
+    tsws = Time([sws["datetime2"][i].replace(" ","T").replace("/","-") for i in range(len(sws))])
+    plot_seeing(sws, tsws, figfp_seeing)
+    
     
 
