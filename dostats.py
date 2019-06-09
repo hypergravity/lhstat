@@ -381,6 +381,113 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
     if figfp_wind is not None:
         fig.savefig(figfp_wind)
     return
+
+
+
+#%%
+from matplotlib import transforms
+def plot_wind_sub(ws, wd, ttws, figfp_wind=None):
+    
+    ind_day = isdaytime(ttws, t1)
+    # last day
+    fjd = np.floor(ttws.jd)
+    if np.mod(ttws.jd[-1],1) > 0.5:
+        jd_last = np.unique(fjd)[-1]
+    else:
+        jd_last = np.unique(fjd)[-2]
+    ind_lastday = fjd==jd_last
+    date_last = Time(jd_last,format="jd").isot[:10]
+    jd_lastmidnight = jd_last+0.5
+    
+    wsbins = np.arange(0,26)
+    wdbins = np.linspace(0,2*np.pi,18)
+    
+    fig = plt.figure(figsize=(5,5))
+    # -----------------------------
+    ax = fig.add_subplot(111)
+    ax.hist(ws[ind_lastday], bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
+    ax.hist(ws[ind_lastday&ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
+    ax.hist(ws[ind_lastday&~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="nighttime")
+    ax.set_xlabel("Wind speed [m/s]")
+    ax.set_ylabel("Counts")
+    ax.set_title(date_last)
+    ax.set_xlim(wsbins[[0,-1]])
+    ax.legend()
+    # -----------------------------
+    fig.tight_layout()
+    fig.savefig(figfp_wind.replace(".png","_1.png"))
+    
+    fig = plt.figure(figsize=(5,5))
+    # -----------------------------
+    ax = fig.add_subplot(111)
+    ax.hist(ws, bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
+    ax.hist(ws[ind_day], bins=wsbins, density=False, histtype="step", lw=5, color="red", label="daytime")
+    ax.hist(ws[~ind_day], bins=wsbins, density=False, histtype="step",  lw=5, color="blue", label="nighttime")
+    ax.set_xlabel("Wind speed [m/s]")
+    ax.set_ylabel("Counts")
+    ax.set_title("All")
+    ax.set_xlim(wsbins[[0,-1]])
+    ax.legend()
+    # -----------------------------
+    fig.tight_layout()
+    fig.savefig(figfp_wind.replace(".png","_2.png"))
+    
+    fig = plt.figure(figsize=(5,5))
+    # -----------------------------
+    ax = fig.add_subplot(111, projection="polar")
+    plt.scatter(wd[ind_lastday&ind_day],ws[ind_lastday&ind_day],s=10, c=np.abs(ttws.jd[ind_lastday&ind_day]-jd_lastmidnight)*24, cmap=plt.cm.jet, alpha=0.8, vmin=0, vmax=12)
+    ca = plt.colorbar()
+    ca.set_ticks([0,12])
+    ca.set_ticklabels(["nighttime","daytime"])#, rotation=90)
+    ax.set_ylim(0, wsbins[-1])
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    # -----------------------------
+    fig.tight_layout()
+    fig.savefig(figfp_wind.replace(".png","_3.png"))
+    
+    fig = plt.figure(figsize=(5,5))
+    # -----------------------------
+    ax = fig.add_subplot(111, projection="polar")
+    grid_ws, grid_wd = wsbins,wdbins
+    mesh_wd,mesh_ws = np.meshgrid(grid_wd,grid_ws)
+    mesh_wc_day = binned_statistic_2d(
+            wd[ind_day], 
+            ws[ind_day], 
+            ws[ind_day], 
+            bins=(grid_wd,grid_ws),
+            statistic="count")
+    l = ax.pcolormesh(mesh_wd, mesh_ws, np.log10(mesh_wc_day[0].T), cmap=plt.cm.hot_r, vmin=0, alpha=1)#, extent=(*grid_wd[[0,-1]], *grid_ws[[0,-1]]))
+    plt.colorbar(l)
+    ax.set_title("log10(counts) [daytime]")
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    # -----------------------------
+    fig.tight_layout()
+    fig.savefig(figfp_wind.replace(".png","_4.png"))
+    
+    fig = plt.figure(figsize=(5,5))
+    # -----------------------------
+    ax = fig.add_subplot(111, projection="polar")
+    grid_ws, grid_wd = wsbins,wdbins
+    mesh_wd,mesh_ws = np.meshgrid(grid_wd,grid_ws)
+    mesh_wc_night = binned_statistic_2d(
+            wd[~ind_day], 
+            ws[~ind_day], 
+            ws[~ind_day], 
+            bins=(grid_wd,grid_ws),
+            statistic="count")
+    l = ax.pcolormesh(mesh_wd, mesh_ws, np.log10(mesh_wc_night[0].T), cmap=plt.cm.hot_r, vmin=0, alpha=1)#, extent=(*grid_wd[[0,-1]], *grid_ws[[0,-1]]))
+    plt.colorbar(l)
+    ax.set_title("log10(counts) [nighttime]")
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    # -----------------------------
+    fig.tight_layout()
+    fig.savefig(figfp_wind.replace(".png","_5.png"))
+    
+    return
+    
     
 #%%
 
@@ -446,4 +553,6 @@ if __name__ == "__main__":
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
     plot_wind(ws, wd, ttws, figfp_wind)
+    plot_wind_sub(ws, wd, ttws, figfp_wind)
+    
 
