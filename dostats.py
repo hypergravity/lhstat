@@ -638,5 +638,8 @@ if __name__ == "__main__":
     tsws = Time([sws["datetime2"][i].replace(" ","T").replace("/","-") for i in range(len(sws))])
     plot_seeing(sws, tsws, figfp_seeing)
     
+    """ close all figures """
+    plt.close("all")
+    
     
 
