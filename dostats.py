@@ -153,6 +153,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd==jd_last
     date_last = Time(jd_last,format="jd").isot[:10]
+    
     l2 = ax.plot(np.mod(tsky[ind_lastday].jd,1), sky["MPSAS"][ind_lastday],'-', color="r", alpha=0.8, ms=0.2, label=date_last)
     ax.legend(loc="lower left", framealpha=0.1)
         
@@ -168,11 +169,11 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
     ax.set_xlim(.2, 0.93)
     ax.set_title("SQM")
     afontsize = 20
-    ax.annotate(Time.now().isot[:10]+"  @SST", xy=(0.5,0.7), xycoords="axes fraction", fontsize=afontsize, horizontalalignment="center")
+    #ax.annotate(Time.now().isot[:10]+"  @SST", xy=(0.5,0.7), xycoords="axes fraction", fontsize=afontsize, horizontalalignment="center")
     
-    tstr_now = Time.now().isot[:10]
+    tstr_now = date_last#Time.now().isot[:10]
     tstr_min = tsky.min().isot[:10]
-    tstr_max = tsky.max().isot[:10]
+    tstr_max = date_last#tsky.max().isot[:10]
     ax.annotate("{} - {}".format(tstr_min, tstr_max), xy=(0.5,0.8), xycoords="axes fraction", fontsize=afontsize, horizontalalignment="center")
     
     fig.tight_layout()
@@ -522,7 +523,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd==jd_last
     date_last = Time(jd_last,format="jd").isot[:10]
-    ax.plot(tsws.jd[ind_lastday]-jd_last, sws["seeing"][ind_lastday], "s-", alpha=0.5)
+    ax.plot(tsws.jd[ind_lastday]-jd_last, sws["seeing"][ind_lastday], "s-", alpha=0.5, label="seeing data")
     ax.set_xticks(np.linspace(0,1,25))
     int_hours_ut = np.arange(25)+8
     int_hours_ut[int_hours_ut>24]-=24
@@ -532,6 +533,9 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax.set_title("Seeing stat of SST [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
     ax.set_ylabel("Seeing (arcsec)")
+    seeing_med_last = np.nanmedian(sws["seeing"][ind_lastday])
+    ax.hlines(seeing_med_last, *ax.get_xlim(), colors="r", linestyle="dashed", label="Median={:.2f}\"".format(seeing_med_last))
+    ax.legend()
     fig.tight_layout()
     fig.savefig(figfp_seeing.replace(".png", "_last_seeing.png"))
     
@@ -546,7 +550,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd==jd_last
     date_last = Time(jd_last,format="jd").isot[:10]
-    ax.plot(tsws.jd[ind_lastday]-jd_last, sws["col5"][ind_lastday], "s-", alpha=0.5)
+    ax.plot(tsws.jd[ind_lastday]-jd_last, sws["col4"][ind_lastday], "s-", alpha=0.5)
     ax.set_xticks(np.linspace(0,1,25))
     int_hours_ut = np.arange(25)+8
     int_hours_ut[int_hours_ut>24]-=24
@@ -630,7 +634,7 @@ if __name__ == "__main__":
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
     plot_wind(ws, wd, ttws, figfp_wind)
-    plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=figfp_wind)
+    plot_wind_sub(ws, wd, ttws, nwdbins=24, figfp_wind=figfp_wind)
     
     """ seeing stats """
     sws = Table.read(datafp_seeing, format="ascii.no_header", delimiter="|",
