@@ -300,10 +300,9 @@ def plot_sky_goodness(tsky, sky, figfp_sky_brightness):
     return 
 
 #%%
-from matplotlib import transforms
 def plot_wind(ws, wd, ttws, figfp_wind=None):
     
-    ind_day = isdaytime(ttws, t1)
+    ind_day = isdaytime(ttws, t3)
     # last day
     fjd = np.floor(ttws.jd)
     if np.mod(ttws.jd[-1],1) > 0.5:
@@ -386,11 +385,10 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
 
 
 #%%
-from matplotlib import transforms
 def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     _figsize = (7, 6)
     
-    ind_day = isdaytime(ttws, t1)
+    ind_day = isdaytime(ttws, t3)
     # last day
     fjd = np.floor(ttws.jd)
     if np.mod(ttws.jd[-1],1) > 0.5:
@@ -447,6 +445,7 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     ax.set_ylim(0, wsbins[-1])
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
+    ax.set_title("Wind speed & direction [{}]".format(date_last))
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_3.png"))
     
@@ -500,7 +499,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111)
     ax.hist(sws["seeing"], bins=np.linspace(0,3,31), histtype="bar")
-    ax.set_title("Seeing stat of SST")
+    ax.set_title("Seeing stat of SST [all data]")
     ax.set_xlabel("Seeing (arcsec)")
     ax.set_ylabel("Counts")
     ax.set_xlim(0,3)
@@ -525,10 +524,10 @@ def plot_seeing(sws, tsws, figfp_seeing):
     date_last = Time(jd_last,format="jd").isot[:10]
     ax.plot(tsws.jd[ind_lastday]-jd_last, sws["seeing"][ind_lastday], "s-", alpha=0.5, label="seeing data")
     ax.set_xticks(np.linspace(0,1,25))
-    int_hours_ut = np.arange(25)+8
+    int_hours_ut = np.arange(25)+4
     int_hours_ut[int_hours_ut>24]-=24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.3,0.7)
+    ax.set_xlim(0.3,0.8)
     ax.set_ylim(0,3)
     ax.set_title("Seeing stat of SST [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
@@ -552,10 +551,10 @@ def plot_seeing(sws, tsws, figfp_seeing):
     date_last = Time(jd_last,format="jd").isot[:10]
     ax.plot(tsws.jd[ind_lastday]-jd_last, sws["col4"][ind_lastday], "s-", alpha=0.5)
     ax.set_xticks(np.linspace(0,1,25))
-    int_hours_ut = np.arange(25)+8
+    int_hours_ut = np.arange(25)+4
     int_hours_ut[int_hours_ut>24]-=24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.3,0.7)
+    ax.set_xlim(0.3,0.8)
     #ax.set_ylim(0,3)
     ax.set_title("Flux stat of SST [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
