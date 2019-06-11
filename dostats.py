@@ -311,7 +311,7 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd==jd_last
     date_last = Time(jd_last,format="jd").isot[:10]
-    jd_lastmidnight = jd_last+0.5
+    jd_lastmidnight = jd_last+0.5+2/24.  # @ Lenghu, midnight is 2:00 am
     
     wsbins = np.arange(0,26)
     wdbins = np.linspace(0,2*np.pi,18)
