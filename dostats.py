@@ -527,8 +527,8 @@ def plot_seeing(sws, tsws, figfp_seeing):
     int_hours_ut = np.arange(25)+4
     int_hours_ut[int_hours_ut>24]-=24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.3,0.8)
-    ax.set_ylim(0,3)
+    ax.set_xlim(0.3, 0.8)
+    ax.set_ylim(0, 5)
     ax.set_title("Seeing stat of SST [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
     ax.set_ylabel("Seeing (arcsec)")
