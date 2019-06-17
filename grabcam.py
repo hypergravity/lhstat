@@ -91,7 +91,7 @@ if __name__ == "__main__":
     # make directory
     dir_temp = "./tempcam"
     if os.path.exists(dir_temp):
-        os.rmdir(dir_temp)
+        os.system("rm -rf {}".format(dir_temp))
     os.mkdir(dir_temp)
 
     # today, noon
@@ -121,5 +121,7 @@ if __name__ == "__main__":
         if jd_pics_flag[i]:
             shutil.copyfile(fps[i],"{}/{}".format(dir_temp, os.path.basename(fps[i])))
             print("@lhstat: copying file [{}] ...".format(fps[i]))
+
+    print("@lhstat: Done, pics stored in {}!".format(dir_temp))
 
 
