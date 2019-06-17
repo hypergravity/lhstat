@@ -103,8 +103,8 @@ if __name__ == "__main__":
 
     # jd of ev & momonts of last night
     from bisect import bisect
-    i_ = bisect(t1.jd[:,0], t_today.jd-0.5)
-    jd_lastnight = (t1.jd[i_-1, 1], t1.jd[i_, 0])
+    i_ = bisect(t3.jd[:,0], t_today.jd-0.5)
+    jd_lastnight = (t3.jd[i_-1, 1], t3.jd[i_, 0])
 
     # glob pics
     from glob import glob
