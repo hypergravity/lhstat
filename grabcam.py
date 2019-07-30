@@ -117,6 +117,7 @@ if __name__ == "__main__":
     fps.extend(glob("/data/lh/allskycam/{:04d}/{:02d}/{:02d}/*.jpg".format(dt_yesterday.year,dt_yesterday.month,dt_yesterday.day)))
 
     # time of cam
+    print(fps)
     jd_pics = np.array([picname2jd(fp) for fp in fps])
 
     # validate time
