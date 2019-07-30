@@ -62,7 +62,7 @@ def picname2jd(fp):
     # return Time(os.path.basename(fp).replace(".jpg", ""), format="iso").jd
     # 2019.07.27 new name format
     name = os.path.basename(fp)
-    name = name[:10].replace("_", "") + "T" + \
+    name = name[:10].replace("_", "-") + "T" + \
            name[11:].replace("_", ":").replace(".jpg", "")
     return Time(name, format="isot").jd
 
