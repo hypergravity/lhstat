@@ -20,9 +20,6 @@ Created on %(date)s
 
 #%%
 
-
-
-
 import os
 import numpy as np
 
@@ -301,22 +298,22 @@ def plot_sky_goodness(tsky, sky, figfp_sky_brightness):
 
 #%%
 def plot_wind(ws, wd, ttws, figfp_wind=None):
-    
     ind_day = isdaytime(ttws, t3)
     # last day
     fjd = np.floor(ttws.jd)
-    if np.mod(ttws.jd[-1],1) > 0.5:
+    if np.mod(ttws.jd[-1], 1) > 0.5:
         jd_last = np.unique(fjd)[-1]
     else:
         jd_last = np.unique(fjd)[-2]
-    ind_lastday = fjd==jd_last
-    date_last = Time(jd_last,format="jd").isot[:10]
-    jd_lastmidnight = jd_last+0.5+2/24.  # @ Lenghu, midnight is 2:00 am
-    
-    wsbins = np.arange(0,26)
-    wdbins = np.linspace(0,2*np.pi,18)
-    
-    fig = plt.figure(figsize=(15,10))
+    ind_lastday = fjd == jd_last
+    date_last = Time(jd_last, format="jd").isot[:10]
+    jd_lastmidnight = jd_last + 0.5 + 2 / 24.  # @ Lenghu, midnight is 2:00 am
+
+    wmax = np.max((np.max(ws) + 1, 26))
+    wsbins = np.arange(0, wmax)
+    wdbins = np.linspace(0, 2 * np.pi, 18)
+
+    fig = plt.figure(figsize=(15, 10))
     
     ax = fig.add_subplot(2,3,1)
     ax.hist(ws[ind_lastday], bins=wsbins, density=False, histtype="stepfilled", lw=5, color="gray", label="all data")
@@ -398,12 +395,13 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     ind_lastday = fjd==jd_last
     date_last = Time(jd_last,format="jd").isot[:10]
     jd_lastmidnight = jd_last+0.5
-    
-    wsbins = np.arange(0,26)
+
+    wmax = np.max((np.max(ws) + 1, 26))
+    wsbins = np.arange(0, wmax)
     wdp = np.copy(wd)
-    wdshift = 2*np.pi/nwdbins/2
-    wdp[wdp>(2*np.pi-wdshift)] -= 2*np.pi
-    wdpbins = np.linspace(0, 2*np.pi, nwdbins+1)-wdshift
+    wdshift = 2 * np.pi / nwdbins / 2
+    wdp[wdp > (2 * np.pi - wdshift)] -= 2 * np.pi
+    wdpbins = np.linspace(0, 2 * np.pi, nwdbins + 1) - wdshift
     
     # -----------------------------
     fig = plt.figure(figsize=_figsize)
@@ -418,7 +416,6 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     ax.legend()
     fig.tight_layout()
     fig.savefig(figfp_wind.replace(".png","_1.png"))
-    
     
     # -----------------------------
     fig = plt.figure(figsize=_figsize)
