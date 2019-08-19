@@ -386,6 +386,7 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     _figsize = (7, 6)
     
     ind_day = isdaytime(ttws, t3)
+    ind_night = ~ind_day
     # last day
     fjd = np.floor(ttws.jd)
     if np.mod(ttws.jd[-1],1) > 0.5:
@@ -435,7 +436,7 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     # -----------------------------
     fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111, projection="polar")
-    plt.scatter(wd[ind_lastday&ind_day],ws[ind_lastday&ind_day],s=10, c=np.abs(ttws.jd[ind_lastday&ind_day]-jd_lastmidnight)*24, cmap=plt.cm.jet, alpha=0.8, vmin=0, vmax=12)
+    plt.scatter(wd[ind_lastday],ws[ind_lastday],s=10, c=np.abs(ttws.jd[ind_lastday]-jd_lastmidnight)*24, cmap=plt.cm.jet, alpha=0.8, vmin=0, vmax=12)
     ca = plt.colorbar()
     ca.set_ticks([0,12])
     ca.set_ticklabels(["nighttime","daytime"])#, rotation=90)
