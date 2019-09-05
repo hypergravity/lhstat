@@ -36,7 +36,7 @@ from scipy import signal
 from scipy.stats import binned_statistic_2d
 from matplotlib import rcParams
 from matplotlib import pyplot as plt
-from astropy.table import Table
+from astropy.table import Table, Column
 rcParams.update({"font.size":15})
 
 #%%
@@ -180,85 +180,150 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
 
 #%%
 """ sky goodness """
-def plot_sky_goodness(tsky, sky, figfp_sky_brightness):
+def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness):
     
-    # day / night
-    ind_day = isdaytime(tsky, t1)
+    # day / night in tsky
+    ind_day = isdaytime(tsky_, t1)
     ind_night = np.logical_not(ind_day)
     
     # only need night sky data
-    tsky = tsky[ind_night]
-    sky = sky[ind_night]
-    
-    
+    tsky = tsky_[ind_night]
+    sky = sky_[ind_night]
+
+    # flag for sky
+    # down : -1
+    # bad  :  0
+    # good :  1
+    flag_good = np.zeros(len(tsky), int)
+
+    # start & end of the year, say 2019
     fjd0 = np.floor(Time("{:04d}-01-01T01:01:00.000".format(year), format="isot").jd)
     fjd1 = np.floor(Time("{:04d}-01-01T01:01:00.000".format(year+1), format="isot").jd)
     
-    
-    fig = plt.figure(figsize=(10,8))
+    # init figure
+    fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    
+    # plotting parameters
     lw = 3
+
+    # smoothing parameters
     threshold = 0.03
-    
+
+    # count good/bad/down/tbd time & days
     time_total = 0
     time_tbd = 0
     time_down = 0
     time_work = 0
     time_good = 0
-    
+    count_total = 0
+    count_tbd = 0
+    count_down = 0
+    count_good = 0
+    count_bad = 0
+
+    # now time
     jd_now = Time.now().jd
     
     for this_jd in np.arange(fjd0, fjd1):
-        
         # look for evening & morning time
         this_ev, this_mn = t1[(t1.jd>this_jd)&(t1.jd<this_jd+1)]
         
         # count sky data in this night
-        ind_this_night = (tsky>this_ev)&(tsky<this_mn)
-        #this_night_bin = (np.linspace(0,1,10)*(this_mn-this_ev)+this_ev).jd
-        #this_night_center = np.diff(this_night_bin)+this_night_bin[:-1]
-        
-        if 0<np.sum(ind_this_night)<10:
+        ind_this_night = (tsky>this_ev) & (tsky<this_mn)
+        sub_this_night = np.where(ind_this_night)[0]
+        # this_night_bin = (np.linspace(0,1,10)*(this_mn-this_ev)+this_ev).jd
+        # this_night_center = np.diff(this_night_bin)+this_night_bin[:-1]
+
+        if 0 < np.sum(ind_this_night) < 10:
             # worked, but down
-            this_time_total = this_mn.jd-this_ev.jd
-            time_total+=this_time_total
-            time_down+=this_time_total
+            this_time_total = this_mn.jd - this_ev.jd
+            time_total += this_time_total
+            time_down += this_time_total
             
             # plot background
             plt.plot([this_jd,this_jd], [this_ev.jd-this_jd,this_mn.jd-this_jd], 'gray',lw=lw)
-        
-        elif 10<=np.sum(ind_this_night):
+
+            # set flag
+            flag_good[sub_this_night] = -1
+
+            # count time & days
+            count_down += 1
+            count_total += 1
+
+        elif 10 <= np.sum(ind_this_night):
+            # worked, worked
+
             # plot background
             plt.plot([this_jd,this_jd], [this_ev.jd-this_jd,this_mn.jd-this_jd], 'gray',lw=lw)
             # low pass filter & moving std
             x = tsky[ind_this_night].jd
-            y = sky["MPSAS"][ind_this_night].data
+            y = sky["MPSAS"][ind_this_night].data.data
             yf = lfilter(x, y)
             ystd = moving_std(yf-y, n_pix=10)
             x_plot = this_jd*np.ones_like(x)
             ind_clear = ystd<threshold
             y_plot = np.where(ind_clear, x-this_jd, np.nan)
-            
-            # plot good time
-            plt.plot(x_plot, y_plot, 'cyan', lw=lw)
-            
-            # worked
-            this_time_total = this_mn.jd-this_ev.jd
-            time_total+=this_time_total
-            time_work+=this_time_total
-            
-            dx = np.hstack((np.diff(x[:2]), (np.diff(x[:-1])+np.diff(x[1:]))/2, np.diff(x[-2:])))
-            time_good+=np.sum(dx[ind_clear])
-            
+
+            # count time delta
+            t_start, t_stop, t_delta, t_deltamax = count_delta(x, ind_clear*1)
+            if t_deltamax > 3/24:
+                # the longest duration is longer than 3 hours
+                # set flag
+                flag_good[sub_this_night[ind_clear]] = 1
+
+                # plot good time
+                plt.plot(x_plot, y_plot, 'cyan', lw=lw)
+
+                # worked
+                this_time_total = this_mn.jd - this_ev.jd
+                time_total += this_time_total
+                time_work += this_time_total
+
+                dx = np.hstack((np.diff(x[:2]),
+                                (np.diff(x[:-1]) + np.diff(x[1:])) / 2,
+                                np.diff(x[-2:])))
+                time_good += np.sum(dx[ind_clear])
+
+                # count time & days
+                count_good += 1
+                count_total += 1
+
+            else:
+                # longest duration is shorter than 3 hours, set to bad
+                # set flag
+                # flag_good[sub_this_night[ind_clear]] = 0
+
+                # plot good time
+                # plt.plot(x_plot, y_plot, 'cyan', lw=lw)
+
+                # worked
+                this_time_total = this_mn.jd - this_ev.jd
+                time_total += this_time_total
+                time_work += this_time_total
+
+                # dx = np.hstack((np.diff(x[:2]),
+                #                 (np.diff(x[:-1]) + np.diff(x[1:])) / 2,
+                #                 np.diff(x[-2:])))
+                # time_good += np.sum(dx[ind_clear])
+
+                # count time & days
+                count_bad += 1
+                count_total += 1
+
         else:
             # no observation
             this_time_total = this_mn.jd-this_ev.jd
-            time_total+=this_time_total
+            time_total += this_time_total
             if this_ev.jd > jd_now:
                 time_tbd += this_time_total
+                # count time & days
+                count_tbd += 1
+                count_total += 1
             else:
                 time_down += this_time_total
+                # count time & days
+                count_down += 1
+                count_total += 1
                 
             # plot background
             if this_ev.jd > jd_now:
@@ -290,11 +355,46 @@ def plot_sky_goodness(tsky, sky, figfp_sky_brightness):
     ax.annotate("Down  : {:02.2f}%".format(100*(time_down/(time_work+time_down))), xy=(0.65, 0.1), xycoords="axes fraction", fontsize=afontsize)
     ax.annotate("Clear  : {:02.2f}%".format(100*time_good/time_work),  xy=(0.1, 0.9), xycoords="axes fraction", fontsize=afontsize)
     ax.annotate("Cloudy: {:02.2f}%".format(100*(1-time_good/time_work)), xy=(0.65, 0.9), xycoords="axes fraction", fontsize=afontsize)
+    ax.annotate("N(good/bad/down/tbd): {}/{}/{}/{}".format(count_good, count_bad, count_down, count_tbd), xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
+
     fig.tight_layout()
     
     fig.savefig(figfp_sky_goodness)
-    
-    return 
+
+    tsky_flagged = Table([Column(tsky.jd, "jd"),
+                          # Column(ind_night, "isnight"),
+                          Column(flag_good, "isgood")])
+    return tsky_flagged
+
+
+def count_delta(t, flag, teps=1e-10):
+    """
+    Parameters
+    ----------
+    t:
+        time
+    flag:
+        1 for good, 0 for bad
+    teps:
+        for pending head and tail
+
+    Return:
+    -------
+    list of continued time
+    """
+    if np.sum(flag)>0:
+        t_pended = np.hstack((t[0]-teps, np.array(t).flatten(), t[-1]+teps))
+        flag = np.array(flag, int)
+        flag_pended = np.hstack((0, flag, 0))
+        flag_diff = np.hstack((np.diff(flag_pended), 0))
+        t_start = t_pended[flag_diff > 0]
+        t_stop = t_pended[flag_diff < 0]
+        t_delta = t_stop-t_start
+        t_deltamax = np.max(t_delta)
+        return t_start, t_stop, t_delta, t_deltamax
+    else:
+        return np.nan, np.nan, np.nan, 0
+
 
 #%%
 def plot_wind(ws, wd, ttws, figfp_wind=None):
@@ -581,6 +681,8 @@ if __name__ == "__main__":
         datafp_wind = "./latest_data/weather2019.csv"
         # seeing data
         datafp_seeing = "./latest_data/Seeing_Data.txt"
+
+        datafp_tsky_flagged = "./figs/tsky_flagged.csv"
         
         # figure paths
         figfp_sky_brightness = "./figs/latest_sky_brightness.png"
@@ -602,7 +704,9 @@ if __name__ == "__main__":
         datafp_wind = "./latest_data/weather2019.csv"
         # seeing data
         datafp_seeing = "./latest_data/Seeing_Data.txt"
-        
+
+        datafp_tsky_flagged = "./figs/tsky_flagged.csv"
+
         # figure paths
         figfp_sky_brightness = "./figs/latest_sky_brightness.png"
         figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
@@ -622,7 +726,8 @@ if __name__ == "__main__":
     tsky = Time(sky_tstr)
     
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
-    plot_sky_goodness(tsky, sky, figfp_sky_goodness)
+    tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness)
+    tsky_flagged.write(datafp_tsky_flagged, overwrite=True)
         
     """ wind stats """
     tws = Table.read(datafp_wind, format="ascii.commented_header")
