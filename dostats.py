@@ -181,7 +181,12 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
 #%%
 """ sky goodness """
 def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness):
-    
+    # start & end of the year, say 2019
+    fjd0 = np.floor(
+        Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
+    fjd1 = np.floor(
+        Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
+
     # day / night in tsky
     ind_day = isdaytime(tsky_, t1)
     ind_night = np.logical_not(ind_day)
@@ -190,16 +195,17 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness):
     tsky = tsky_[ind_night]
     sky = sky_[ind_night]
 
+    # only this year
+    ind_this_year = (tsky.jd > fjd0) & (tsky.jd < fjd1)
+    tsky = tsky[ind_this_year]
+    sky = sky[ind_this_year]
+
     # flag for sky
     # down : -1
     # bad  :  0
     # good :  1
     flag_good = np.zeros(len(tsky), int)
 
-    # start & end of the year, say 2019
-    fjd0 = np.floor(Time("{:04d}-01-01T01:01:00.000".format(year), format="isot").jd)
-    fjd1 = np.floor(Time("{:04d}-01-01T01:01:00.000".format(year+1), format="isot").jd)
-    
     # init figure
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
@@ -347,7 +353,7 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness):
     ax.set_xticks(xtick_fjd)
     xtick_labels = [_[:7] for _ in xtick_times.isot]
     ax.set_xticklabels(xtick_labels, rotation=45)
-    ax.set_xlim(xtick_fjd[0]-2,xtick_fjd[-1]+32)
+    ax.set_xlim(xtick_fjd[0]-2, xtick_fjd[-1]+33)
     
     ax.set_title("Observing time (Astronomical twilights) stat @ SST")
     afontsize = 20
@@ -682,7 +688,7 @@ if __name__ == "__main__":
         # seeing data
         datafp_seeing = "./latest_data/Seeing_Data.txt"
 
-        datafp_tsky_flagged = "./figs/tsky_flagged.csv"
+        datafp_tsky_flagged = "./figs/tsky_flagged_{}.csv".format(year)
         
         # figure paths
         figfp_sky_brightness = "./figs/latest_sky_brightness.png"
@@ -705,7 +711,7 @@ if __name__ == "__main__":
         # seeing data
         datafp_seeing = "./latest_data/Seeing_Data.txt"
 
-        datafp_tsky_flagged = "./figs/tsky_flagged.csv"
+        datafp_tsky_flagged = "./figs/tsky_flagged_{}.csv".format(year)
 
         # figure paths
         figfp_sky_brightness = "./figs/latest_sky_brightness.png"
