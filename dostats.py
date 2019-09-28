@@ -42,7 +42,7 @@ rcParams.update({"font.size":15})
 #%%
 
 def read_sunmoon(fp="./sqm/lhsunmoon.dat"):
-        
+
     with open(fp, "r+", encoding="gb2312") as f:
         lines = f.readlines()
     
@@ -159,7 +159,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
     ax.set_xticks(_xticks)
     ax.set_xticklabels(_xticklabels)
     
-    ax.set_ylabel("SQM sky brightness (mag)")
+    ax.set_ylabel("SQM sky brightness (mag/arcsec$^2$)")
     ax.set_xlabel("Time (UT hours)")
     
     ax.set_ylim(24,6)
@@ -180,7 +180,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
 
 #%%
 """ sky goodness """
-def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness):
+def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, dt_filter=0):
     # start & end of the year, say 2019
     fjd0 = np.floor(
         Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
@@ -272,7 +272,7 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness):
 
             # count time delta
             t_start, t_stop, t_delta, t_deltamax = count_delta(x, ind_clear*1)
-            if t_deltamax > 3/24:
+            if t_deltamax > dt_filter/24:
                 # the longest duration is longer than 3 hours
                 # set flag
                 flag_good[sub_this_night[ind_clear]] = 1
@@ -660,7 +660,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
     ax.set_xlim(0.3,0.8)
     #ax.set_ylim(0,3)
-    ax.set_title("Flux stat of SST [{}]".format(date_last))
+    ax.set_title("DIMM target flux [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
     ax.set_ylabel("Flux")
     fig.tight_layout()
@@ -732,12 +732,12 @@ if __name__ == "__main__":
     tsky = Time(sky_tstr)
     
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
-    tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness)
+    tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness, dt_filter=0)
     tsky_flagged.write(datafp_tsky_flagged, overwrite=True)
         
     """ wind stats """
     tws = Table.read(datafp_wind, format="ascii.commented_header")
-    ttws = Time(["{}T{}:00".format(tws["date"][i],tws["time"][i]) for i in range(len(tws))])
+    ttws = Time(["{}T{}:00".format(tws["date"][i], tws["time"][i]) for i in range(len(tws))])
     
     ws = tws["wind_speed_2mins"]
     wd = tws["wind_direction"]/180*np.pi
