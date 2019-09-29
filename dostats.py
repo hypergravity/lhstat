@@ -371,7 +371,7 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, wjd0=[], dt_filter=0):
     ldown = ax.plot([0, 0], [1, 1], "-", lw=lw, color="red", label="down")
     ltbd = ax.plot([0, 0], [1, 1], "-", lw=lw, color="blue", label="tbd")
     ax.legend([lgood[0], lbad[0], ldown[0], ltbd[0]],
-              ["good", "bad", "down", "tbd"],
+              ["photometric", "bad", "down", "tbd"],
               loc="upper center", framealpha=0, fontsize=afontsize*0.6)
 
     fig.tight_layout()
