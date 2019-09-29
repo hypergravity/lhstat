@@ -39,7 +39,6 @@ from matplotlib import pyplot as plt
 from astropy.table import Table, Column
 rcParams.update({"font.size":15})
 
-#%%
 
 def read_sunmoon(fp="./sqm/lhsunmoon.dat"):
 
@@ -78,17 +77,7 @@ def read_sunmoon(fp="./sqm/lhsunmoon.dat"):
     return t0, t1, t2, t3, tmoon
 
 
-#t0, t1, t2, t3, tmoon = read_sunmoon()
-"""
-t0: local date
-t1: astronomy
-t2: sailing
-t3: civil
-tmoon: moon rise and set
-"""
-
-#%%
-""" day / night """
+# """ day / night """
 def isdaytime(x, t1):
     """ given t1, return True if elements in x is in daytime """
     medata = t1.mjd
@@ -96,18 +85,18 @@ def isdaytime(x, t1):
     ind_day = np.array([np.any((medata[:,0]<xmjd_)&(medata[:,1]>xmjd_)) for xmjd_ in xmjd])
     return ind_day
 
-#isdaytime(Time([57755.5], format="mjd"), t1)
+# isdaytime(Time([57755.5], format="mjd"), t1)
 
-#%%
-""" low pass filter """
+
+# """ low pass filter """
 def lfilter(x, y, N=8, Wn=0.05, btype='low', analog=False, output='ba'):
     b, a = signal.butter(N, Wn, btype=btype, analog=analog, output=output)
     padlen=np.int(0.3*len(x))
     yf = signal.filtfilt(b, a, y, padlen=padlen)
     return yf
 
-#%%
-""" moving std """
+
+# """ moving std """
 def moving_std(x, n_pix=4):
     xstd = np.zeros_like(x, float)
     xlen = len(x)
@@ -115,10 +104,9 @@ def moving_std(x, n_pix=4):
         xstd[i] = np.std(x[np.max((0, i-n_pix)):np.min((i+n_pix, xlen))])
     return xstd
 
-#%%
 
-""" read sky data """
-#sky = Table.read("/home/cham/lh/sqm/SQMReadings_DLH.txt", format="ascii")
+# """ read sky data """
+# sky = Table.read("/home/cham/lh/sqm/SQMReadings_DLH.txt", format="ascii")
 def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
     """ read SQM data """
     with open(fp_sky, "r+") as f:
@@ -129,8 +117,7 @@ def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
     return sky
 
 
-#%%
-""" sky brightness """
+# """ sky brightness """
 def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
     fig = plt.figure(figsize=(10,7))
     ax = fig.add_subplot(111)
@@ -178,14 +165,12 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
     
     return
 
-#%%
-""" sky goodness """
-def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, dt_filter=0):
+
+# """ sky goodness """
+def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, wjd0=[], dt_filter=0):
     # start & end of the year, say 2019
-    fjd0 = np.floor(
-        Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
-    fjd1 = np.floor(
-        Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
+    fjd0 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
+    fjd1 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
 
     # day / night in tsky
     ind_day = isdaytime(tsky_, t1)
@@ -233,7 +218,24 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, dt_filter=0):
     for this_jd in np.arange(fjd0, fjd1):
         # look for evening & morning time
         this_ev, this_mn = t1[(t1.jd>this_jd)&(t1.jd<this_jd+1)]
-        
+
+        # the whitelist case [added on 2019-09-29]
+        if this_jd in wjd0:
+            # plot good time
+            x_plot = [this_jd, this_jd]
+            y_plot = [this_ev.jd-this_jd, this_mn.jd-this_jd]
+            plt.plot(x_plot, y_plot, 'green', lw=lw)
+
+            this_time_total = this_mn.jd - this_ev.jd
+            time_total += this_time_total
+            time_work += this_time_total
+            time_good += this_time_total
+
+            # count time & days
+            count_good += 1
+            count_total += 1
+            continue
+
         # count sky data in this night
         ind_this_night = (tsky>this_ev) & (tsky<this_mn)
         sub_this_night = np.where(ind_this_night)[0]
@@ -336,7 +338,7 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, dt_filter=0):
                 plt.plot([this_jd,this_jd], [this_ev.jd-this_jd,this_mn.jd-this_jd], 'b',lw=lw)
             else:
                 plt.plot([this_jd,this_jd], [this_ev.jd-this_jd,this_mn.jd-this_jd], 'r',lw=lw)
-    
+
     ax.set_xlabel("Month")
     ax.set_ylabel("Hour(UT)")
     
@@ -344,7 +346,7 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, dt_filter=0):
     
     ax.set_yticks((ytick_hours/24)-12/24+8/24)
     ax.set_yticklabels(["{}".format(_) for _ in ytick_hours])
-    ax.set_ylim(0.2,.9)
+    ax.set_ylim(0.2, .9)
     
     #ax.vlines(jd_now, 0.2,.9, linestyle="dashed", colors="k", zorder=4, alpha=0.5)
     
@@ -362,6 +364,16 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, dt_filter=0):
     ax.annotate("Clear  : {:02.2f}%".format(100*time_good/time_work),  xy=(0.1, 0.9), xycoords="axes fraction", fontsize=afontsize)
     ax.annotate("Cloudy: {:02.2f}%".format(100*(1-time_good/time_work)), xy=(0.65, 0.9), xycoords="axes fraction", fontsize=afontsize)
     ax.annotate("N(good/bad/down/tbd): {}/{}/{}/{}".format(count_good, count_bad, count_down, count_tbd), xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
+
+    # add legend
+    lgood = ax.plot([0, 0], [1, 1], "-", lw=lw, color="cyan", label="good")
+    lbad = ax.plot([0, 0], [1, 1], "-", lw=lw, color="gray", label="bad")
+    ldown = ax.plot([0, 0], [1, 1], "-", lw=lw, color="red", label="down")
+    ltbd = ax.plot([0, 0], [1, 1], "-", lw=lw, color="blue", label="tbd")
+    lwl = ax.plot([0, 0], [1, 1], "-", lw=lw, color="green", label="wl")
+    ax.legend([lgood[0], lbad[0], ldown[0], ltbd[0], lwl[0]],
+              ["good", "bad", "down", "tbd", "wl"],
+              loc="upper center", framealpha=0, fontsize=afontsize*0.6)
 
     fig.tight_layout()
     
@@ -402,7 +414,6 @@ def count_delta(t, flag, teps=1e-10):
         return np.nan, np.nan, np.nan, 0
 
 
-#%%
 def plot_wind(ws, wd, ttws, figfp_wind=None):
     ind_day = isdaytime(ttws, t3)
     # last day
@@ -486,8 +497,6 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
     return
 
 
-
-#%%
 def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     _figsize = (7, 6)
     
@@ -596,7 +605,6 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     return
 
 
-#%%
 def plot_seeing(sws, tsws, figfp_seeing):
     _figsize = (7, 6)
     
@@ -667,63 +675,63 @@ def plot_seeing(sws, tsws, figfp_seeing):
     fig.savefig(figfp_seeing.replace(".png", "_last_flux.png"))
     
     return
-    
-#%%
+
+
+def read_whitelist(fp_whitelist):
+    # the whitelist contains jd for good days
+    with open(fp_whitelist, "r+") as f:
+        s_wdate = [_.strip() for _ in f.readlines()]
+    wjd0 = Time(["{}T12:00:00".format(_) for _ in s_wdate], format="isot").jd
+    return wjd0
+
 
 if __name__ == "__main__":
     
     year = 2019
     
     if os.uname()[1] == "T7610":
-        
         # working dir
-        dir_work = "/home/cham/PycharmProjects/lhstat" 
-        
-        # sunmoon data
-        datafp_sunmoon = "./data/lhsunmoon.dat"
-        # sky brightness data
-        datafp_sky = "./latest_data/SQMReadings.txt"
-        # wind data
-        datafp_wind = "./latest_data/weather2019.csv"
-        # seeing data
-        datafp_seeing = "./latest_data/Seeing_Data.txt"
-
-        datafp_tsky_flagged = "./figs/tsky_flagged_{}.csv".format(year)
-        
-        # figure paths
-        figfp_sky_brightness = "./figs/latest_sky_brightness.png"
-        figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
-        # wind figure
-        figfp_wind = "./figs/latest_wind_stat.png"
-        # seeing figure
-        figfp_seeing = "./figs/latest_seeing_stat.png"
-    
-    else: # on ali server
+        dir_work = "/home/cham/PycharmProjects/lhstat"
+    else:  # on ali server
         # working dir
         dir_work = "/root/lhstat"
-        
-        # sunmoon data
-        datafp_sunmoon = "./data/lhsunmoon.dat"
-        # sky brightness data
-        datafp_sky = "./latest_data/SQMReadings.txt"
-        # wind data
-        datafp_wind = "./latest_data/weather2019.csv"
-        # seeing data
-        datafp_seeing = "./latest_data/Seeing_Data.txt"
+    os.chdir(dir_work)
 
-        datafp_tsky_flagged = "./figs/tsky_flagged_{}.csv".format(year)
+    # #################### common fps #####################
+    # sunmoon data
+    datafp_sunmoon = "./data/lhsunmoon.dat"
+    # sky brightness data
+    datafp_sky = "./latest_data/SQMReadings.txt"
+    # wind data
+    datafp_wind = "./latest_data/weather2019.csv"
+    # seeing data
+    datafp_seeing = "./latest_data/Seeing_Data.txt"
+    # whitelist added on 2019-09-29
+    datafp_whitelist = "./latest_data/whitelist"
 
-        # figure paths
-        figfp_sky_brightness = "./figs/latest_sky_brightness.png"
-        figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
-        # wind figure
-        figfp_wind = "./figs/latest_wind_stat.png"
-        # seeing figure
-        figfp_seeing = "./figs/latest_seeing_stat.png"
-        
-    os.chdir(dir_work)   
-    
-    """ read sunmoon data """
+    # flagged tsky data
+    datafp_tsky_flagged = "./figs/tsky_flagged_{}.csv".format(year)
+
+    # figure paths
+    figfp_sky_brightness = "./figs/latest_sky_brightness.png"
+    figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
+    # wind figure
+    figfp_wind = "./figs/latest_wind_stat.png"
+    # seeing figure
+    figfp_seeing = "./figs/latest_seeing_stat.png"
+    # ######################################################
+
+    """ read white list """
+    wjd0 = read_whitelist(datafp_whitelist)
+
+    """ read sunmoon data
+    t0: local date
+    t1: astronomy
+    t2: sailing
+    t3: civil
+    tmoon: moon rise and set
+    """
+
     t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
     
     """ sky stats"""
@@ -732,7 +740,7 @@ if __name__ == "__main__":
     tsky = Time(sky_tstr)
     
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
-    tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness, dt_filter=0)
+    tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness, wjd0=wjd0, dt_filter=0)
     tsky_flagged.write(datafp_tsky_flagged, overwrite=True)
         
     """ wind stats """
