@@ -224,7 +224,7 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, wjd0=[], dt_filter=0):
             # plot good time
             x_plot = [this_jd, this_jd]
             y_plot = [this_ev.jd-this_jd, this_mn.jd-this_jd]
-            plt.plot(x_plot, y_plot, 'green', lw=lw)
+            plt.plot(x_plot, y_plot, 'cyan', lw=lw)
 
             this_time_total = this_mn.jd - this_ev.jd
             time_total += this_time_total
@@ -363,16 +363,15 @@ def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, wjd0=[], dt_filter=0):
     ax.annotate("Down  : {:02.2f}%".format(100*(time_down/(time_work+time_down))), xy=(0.65, 0.1), xycoords="axes fraction", fontsize=afontsize)
     ax.annotate("Clear  : {:02.2f}%".format(100*time_good/time_work),  xy=(0.1, 0.9), xycoords="axes fraction", fontsize=afontsize)
     ax.annotate("Cloudy: {:02.2f}%".format(100*(1-time_good/time_work)), xy=(0.65, 0.9), xycoords="axes fraction", fontsize=afontsize)
-    ax.annotate("N(good/bad/down/tbd): {}/{}/{}/{}".format(count_good, count_bad, count_down, count_tbd), xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
+    ax.annotate("N(photometric/bad/down/tbd): {}/{}/{}/{}".format(count_good, count_bad, count_down, count_tbd), xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
 
     # add legend
     lgood = ax.plot([0, 0], [1, 1], "-", lw=lw, color="cyan", label="good")
     lbad = ax.plot([0, 0], [1, 1], "-", lw=lw, color="gray", label="bad")
     ldown = ax.plot([0, 0], [1, 1], "-", lw=lw, color="red", label="down")
     ltbd = ax.plot([0, 0], [1, 1], "-", lw=lw, color="blue", label="tbd")
-    lwl = ax.plot([0, 0], [1, 1], "-", lw=lw, color="green", label="wl")
-    ax.legend([lgood[0], lbad[0], ldown[0], ltbd[0], lwl[0]],
-              ["good", "bad", "down", "tbd", "wl"],
+    ax.legend([lgood[0], lbad[0], ldown[0], ltbd[0]],
+              ["good", "bad", "down", "tbd"],
               loc="upper center", framealpha=0, fontsize=afontsize*0.6)
 
     fig.tight_layout()
