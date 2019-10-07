@@ -621,8 +621,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax.vlines(np.nanmedian(sws["seeing"]), *_ylim, colors="r", linestyles="solid")
     fig.tight_layout()
     fig.savefig(figfp_seeing.replace(".png", "_hist.png"))
-    
-    
+
     fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111)
     # last day
@@ -632,13 +631,13 @@ def plot_seeing(sws, tsws, figfp_seeing):
     else:
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd==jd_last
-    date_last = Time(jd_last,format="jd").isot[:10]
+    date_last = Time(jd_last, format="jd").isot[:10]
     ax.plot(tsws.jd[ind_lastday]-jd_last, sws["seeing"][ind_lastday], "s-", alpha=0.5, label="seeing data")
-    ax.set_xticks(np.linspace(0,1,25))
+    ax.set_xticks(np.linspace(0, 1, 25))
     int_hours_ut = np.arange(25)+4
-    int_hours_ut[int_hours_ut>24]-=24
+    int_hours_ut[int_hours_ut > 24] -= 24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.3, 0.8)
+    ax.set_xlim(0.35, 0.9)
     ax.set_ylim(0, 5)
     ax.set_title("Seeing stat of SST [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
@@ -648,8 +647,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax.legend()
     fig.tight_layout()
     fig.savefig(figfp_seeing.replace(".png", "_last_seeing.png"))
-    
-    
+
     fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111)
     # last day
@@ -659,14 +657,14 @@ def plot_seeing(sws, tsws, figfp_seeing):
     else:
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd==jd_last
-    date_last = Time(jd_last,format="jd").isot[:10]
+    date_last = Time(jd_last, format="jd").isot[:10]
     ax.plot(tsws.jd[ind_lastday]-jd_last, sws["col4"][ind_lastday], "s-", alpha=0.5)
-    ax.set_xticks(np.linspace(0,1,25))
+    ax.set_xticks(np.linspace(0, 1, 25))
     int_hours_ut = np.arange(25)+4
     int_hours_ut[int_hours_ut>24]-=24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.3,0.8)
-    #ax.set_ylim(0,3)
+    ax.set_xlim(0.35, 0.9)
+    # ax.set_ylim(0,3)
     ax.set_title("DIMM target flux [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
     ax.set_ylabel("Flux")
