@@ -613,7 +613,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax.set_title("Seeing stat of SST [all data]")
     ax.set_xlabel("Seeing (arcsec)")
     ax.set_ylabel("Counts")
-    ax.set_xlim(0,3)
+    ax.set_xlim(0, 3)
     _ylim = ax.get_ylim()
     ax.set_ylim(*_ylim)
     ax.annotate("Median = {:.2f}\"".format(np.nanmedian(sws["seeing"])), xy=(0.5,0.7), xycoords="axes fraction", fontsize=20, horizontalalignment="left")
@@ -638,7 +638,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     int_hours_ut = np.arange(25)+4
     int_hours_ut[int_hours_ut > 24] -= 24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.35, 0.9)
+    ax.set_xlim(0.3, 0.85)
     ax.set_ylim(0, 5)
     ax.set_title("Seeing stat of SST [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
@@ -664,7 +664,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     int_hours_ut = np.arange(25)+4
     int_hours_ut[int_hours_ut>24]-=24
     ax.set_xticklabels(["{}".format(_) for _ in int_hours_ut])
-    ax.set_xlim(0.35, 0.9)
+    ax.set_xlim(0.3, 0.85)
     # ax.set_ylim(0,3)
     ax.set_title("DIMM target flux [{}]".format(date_last))
     ax.set_xlabel("Hour (UT)")
