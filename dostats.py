@@ -653,7 +653,7 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax = fig.add_subplot(111)
     # last day
     fjd = np.floor(tsws.jd)
-    if np.mod(tsws.jd[-1],1) > 0.5:
+    if np.mod(tsws.jd[-1], 1) > 0.1:
         jd_last = np.unique(fjd)[-1]
     else:
         jd_last = np.unique(fjd)[-2]
