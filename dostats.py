@@ -626,11 +626,12 @@ def plot_seeing(sws, tsws, figfp_seeing):
     ax = fig.add_subplot(111)
     # last day
     fjd = np.floor(tsws.jd)
-    if np.mod(tsws.jd[-1],1) > 0.5:
+    # fixed bug: figure not updated if observation is not till midnight
+    if np.mod(tsws.jd[-1], 1) > 0.1:
         jd_last = np.unique(fjd)[-1]
     else:
         jd_last = np.unique(fjd)[-2]
-    ind_lastday = fjd==jd_last
+    ind_lastday = fjd == jd_last
     date_last = Time(jd_last, format="jd").isot[:10]
     ax.plot(tsws.jd[ind_lastday]-jd_last, sws["seeing"][ind_lastday], "s-", alpha=0.5, label="seeing data")
     ax.set_xticks(np.linspace(0, 1, 25))
