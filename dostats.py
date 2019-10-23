@@ -119,7 +119,7 @@ def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
 
 # """ sky brightness """
 def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
-    fig = plt.figure(figsize=(10,7))
+    fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111)
     # all data
     l1 = ax.plot(np.mod(tsky.jd,1), sky["MPSAS"],'k.', alpha=0.8, ms=0.2, label="all data")
@@ -497,7 +497,7 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
 
 
 def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
-    _figsize = (7, 6)
+    _figsize = (8, 7)
     
     ind_day = isdaytime(ttws, t3)
     ind_night = ~ind_day
@@ -605,7 +605,7 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
 
 
 def plot_seeing(sws, tsws, figfp_seeing):
-    _figsize = (7, 6)
+    _figsize = (8, 7)
     
     fig = plt.figure(figsize=_figsize)
     ax = fig.add_subplot(111)
