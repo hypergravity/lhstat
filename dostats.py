@@ -6,37 +6,33 @@ Created on %(date)s
 @author: %(username)s
 """
 
-#%%
-#%pylab
-#%load_ext autoreload
-#%autoreload 2
-#%reload_ext autoreload
+# %%
+# %pylab
+# %load_ext autoreload
+# %autoreload 2
+# %reload_ext autoreload
+#
+# import sys
+# year = np.int(sys.argv[1])
+# assert 2018<=year<=2020
 
-#%%
-
-#import sys
-#year = np.int(sys.argv[1])
-#assert 2018<=year<=2020
-
-#%%
-
-import os
-import numpy as np
-
-#%%
 
 """ read sun-moon data """
 
+import os
 import re
-from datetime import datetime
-#import time
+
+import numpy as np
+from astropy import table
+from astropy.table import Table, Column
+# import time
 from astropy.time import Time
-#from scipy.stats import binned_statistic
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
+# from scipy.stats import binned_statistic
 from scipy import signal
 from scipy.stats import binned_statistic_2d
-from matplotlib import rcParams
-from matplotlib import pyplot as plt
-from astropy.table import Table, Column
+
 rcParams.update({"font.size":15})
 
 
@@ -113,6 +109,11 @@ def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
         lines_sky = f.readlines()
         
     lines_sky[1] = lines_sky[1].replace("Year/Month/Day", "YMD").replace("Hour/Minute/Second", "HMS").replace("(C)", "")
+
+    # pop null lines because of adding old data
+    for i in np.flipud(np.arange(len(lines_sky))):
+        if len(lines_sky[i])>100:
+            lines_sky.pop(i)
     sky = Table.read(lines_sky[1:], format="ascii.basic")
     return sky
 
@@ -685,7 +686,7 @@ def read_whitelist(fp_whitelist):
 
 if __name__ == "__main__":
     
-    year = 2019
+    year = 2018
     
     if os.uname()[1] == "T7610":
         # working dir
@@ -699,7 +700,9 @@ if __name__ == "__main__":
     # sunmoon data
     datafp_sunmoon = "./data/lhsunmoon.dat"
     # sky brightness data
-    datafp_sky = "./latest_data/SQMReadings.txt"
+    datafp_skys = [# "./latest_data/SQMReadings_20180923.txt",
+                   "./latest_data/SQMReadings.txt",
+                   ]
     # wind data
     datafp_wind = "./latest_data/weather2019.csv"
     # seeing data
@@ -733,10 +736,11 @@ if __name__ == "__main__":
     t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
     
     """ sky stats"""
-    sky = read_sky(datafp_sky)
-    sky_tstr = [(sky["YMD"][i]+"T"+sky["HMS"][i]).replace("/","-") for i in range(len(sky))]
+    sky = table.vstack([read_sky(datafp_sky) for datafp_sky in datafp_skys])
+    sky_tstr = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in
+                range(len(sky))]
     tsky = Time(sky_tstr)
-    
+
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
     tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness, wjd0=wjd0, dt_filter=0)
     tsky_flagged.write(datafp_tsky_flagged, overwrite=True)
