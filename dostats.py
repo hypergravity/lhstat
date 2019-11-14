@@ -686,7 +686,7 @@ def read_whitelist(fp_whitelist):
 
 if __name__ == "__main__":
     
-    year = 2018
+    year = 2019
     
     if os.uname()[1] == "T7610":
         # working dir
