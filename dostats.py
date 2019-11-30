@@ -742,7 +742,8 @@ if __name__ == "__main__":
     tsky = Time(sky_tstr)
 
     # log info
-    with open("./{}.log".format(Time.now().isot), "w+") as f:
+    import datetime
+    with open("./{}.log".format(datetime.datetime.now().isoformat()), "w+") as f:
         f.write(" now: " + Time.now().isot + "\n")
         f.write(" last entry: " + tsky[-1].isot + "\n")
 
