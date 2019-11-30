@@ -741,6 +741,11 @@ if __name__ == "__main__":
                 range(len(sky))]
     tsky = Time(sky_tstr)
 
+    # log info
+    with open("./{}.log".format(Time.now().isot), "rw+") as f:
+        f.write(" now: ", Time.now().isot, "\n")
+        f.write(" last entry: ", tsky[-1].isot, "\n")
+
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
     tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness, wjd0=wjd0, dt_filter=0)
     tsky_flagged.write(datafp_tsky_flagged, overwrite=True)
