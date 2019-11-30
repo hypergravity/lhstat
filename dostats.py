@@ -744,7 +744,7 @@ if __name__ == "__main__":
     # log info
     import datetime
     with open("./{}.log".format(datetime.datetime.now().isoformat()), "w+") as f:
-        f.write(" now: " + Time.now().isot + "\n")
+        f.write(" now: " + datetime.datetime.now().isoformat() + "\n")
         f.write(" last entry: " + tsky[-1].isot + "\n")
 
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
