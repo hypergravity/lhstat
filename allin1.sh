@@ -13,4 +13,4 @@ ipython dostats.py
 mkdir -p ./figs/`date +%Y%m%d`
 cp ./figs/*.png ./figs/`date +%Y%m%d`/
 cp ./latest_data/* ./figs/`date +%Y%m%d`/
-tail ./latest_data/* > ./log/`date +%Y%m%d`.log
+tail ./latest_data/* > ./log/`date +%Y%m%d%H%M%S`.log
