@@ -21,6 +21,7 @@ Created on %(date)s
 
 import os
 import re
+import datetime
 
 import numpy as np
 from astropy import table
@@ -684,6 +685,47 @@ def read_whitelist(fp_whitelist):
     return wjd0
 
 
+def plot_dust():
+    _ystday = Time(datetime.datetime.now()) - 1
+    datafp_dust = "./latest_data/dust/measurement_{}-dM.dat".format(
+        _ystday.isot[:10])
+    figfp_dust = "./figs/latest_dust.png"
+
+    # read data (yesterday)
+    _dust_size = np.array([
+        0.25, 0.28, 0.3, 0.35, 0.4, 0.45, 0.5, 0.58, 0.65,
+        0.7, 0.8, 1., 1.3, 1.6, 2., 2.5, 3., 3.5,
+        4., 5., 6.5, 7.5, 8.5, 10., 12.5, 15., 17.5,
+        20., 25., 30., 32.])
+    with open(datafp_dust, "r+") as f:
+        s = f.readlines()
+    t_dust = Table.read(s, format="ascii.no_header", delimiter="\t")
+    t_dust.remove_column("col1")
+    data_dust = np.array(t_dust.to_pandas())
+    dust_mean = np.mean(data_dust, axis=0)
+    dust_err = np.abs(np.percentile(data_dust, q=[25, 75], axis=0) - dust_mean)
+
+    # plot figure
+    fig = plt.figure(figsize=(8, 7))
+    ax = fig.add_subplot(111)
+    ax.errorbar(np.log10(_dust_size), dust_mean, yerr=dust_err,
+                marker='s', ms=10, mfc='#1f77b4', mec='#1f77b4',
+                ecolor="gray", elinewidth=5, label="daily mean$\\pm1$quantile")
+    ax.legend()
+    ax.set_ylim(-0.01, 0.5)
+    _xticks = [0.2, 0.5, 1, 2, 5, 10, 20]
+    ax.set_xticks(np.log10(_xticks))
+    ax.set_xticklabels(["{}".format(_) for _ in _xticks])
+    ax.set_xlabel("Particle Size [$\\mu$m]")
+    ax.set_ylabel("Particle Counts [$\\mu$g m$^{-3}$]")
+    ax.set_title("Particle size spectrum @SST [{}]".format(_ystday.isot[:10]))
+    fig.tight_layout()
+    # savefig
+    if os.path.exists(figfp_dust):
+        os.remove(figfp_dust)
+    fig.savefig(figfp_dust)
+
+
 if __name__ == "__main__":
     
     year = 2019
@@ -742,7 +784,6 @@ if __name__ == "__main__":
     tsky = Time(sky_tstr)
 
     # log info
-    import datetime
     with open("./{}.log".format(datetime.datetime.now().isoformat()), "w+") as f:
         f.write(" now: " + datetime.datetime.now().isoformat() + "\n")
         f.write(" last entry: " + tsky[-1].isot + "\n")
@@ -763,11 +804,18 @@ if __name__ == "__main__":
     """ seeing stats """
     sws = Table.read(datafp_seeing, format="ascii.no_header", delimiter="|",
                      names=['datetime1', 'datetime2', 'col3', 'col4', 'col5', 'seeing', 'col7', 'col8', 'col9'])
-    tsws = Time([sws["datetime2"][i].replace(" ","T").replace("/","-") for i in range(len(sws))])
+    tsws = Time(
+        [sws["datetime2"][i].replace(" ", "T").replace("/", "-")
+         for i in range(len(sws))])
     plot_seeing(sws, tsws, figfp_seeing)
-    
+
+    """ dust stats """
+    plot_dust()
+
     """ close all figures """
     plt.close("all")
-    
-    
+
+
+
+
 
