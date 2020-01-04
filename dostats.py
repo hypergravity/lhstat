@@ -18,16 +18,16 @@ Created on %(date)s
 
 
 """ read sun-moon data """
-
+import datetime
 import os
 import re
-import datetime
 
 import numpy as np
 from astropy import table
 from astropy.table import Table, Column
 # import time
 from astropy.time import Time
+from matplotlib import colors
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 # from scipy.stats import binned_statistic
@@ -169,7 +169,10 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
 
 
 # """ sky goodness """
-def plot_sky_goodness(tsky_, sky_, figfp_sky_goodness, wjd0=[], dt_filter=0):
+def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png", wjd0=[], dt_filter=0):
+    
+    figfp_sky_goodness = figfp_sky_goodness_fmt.format(year)
+    
     # start & end of the year, say 2019
     fjd0 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
     fjd1 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
@@ -717,8 +720,50 @@ def plot_dust():
     ax.set_xticks(np.log10(_xticks))
     ax.set_xticklabels(["{}".format(_) for _ in _xticks])
     ax.set_xlabel("Particle Size [$\\mu$m]")
-    ax.set_ylabel("Particle Counts [$\\mu$g m$^{-3}$]")
+    ax.set_ylabel("Particle Counts [Liter$^{-1}$]")
     ax.set_title("Particle size spectrum @SST [{}]".format(_ystday.isot[:10]))
+    fig.tight_layout()
+    # savefig
+    if os.path.exists(figfp_dust):
+        os.remove(figfp_dust)
+    fig.savefig(figfp_dust)
+
+
+def plot_dust_ts():
+    _ystday = Time(datetime.datetime.now()) - 1
+    datafp_dust = "./latest_data/dust/measurement_{}-dM.dat".format(
+        _ystday.isot[:10])
+    figfp_dust = "./figs/latest_dust_ts.png"
+
+    # read data (yesterday)
+    _dust_size = np.array([
+        0.25, 0.28, 0.3, 0.35, 0.4, 0.45, 0.5, 0.58, 0.65,
+        0.7, 0.8, 1., 1.3, 1.6, 2., 2.5, 3., 3.5,
+        4., 5., 6.5, 7.5, 8.5, 10., 12.5, 15., 17.5,
+        20., 25., 30., 32.])
+    with open(datafp_dust, "r+") as f:
+        s = f.readlines()
+    t_dust = Table.read(s, format="ascii.no_header", delimiter="\t")
+    t_time = Time([_.replace("/", "-") for _ in t_dust["col1"].data], format="iso").mjd-np.floor(_ystday.mjd)
+    t_dust.remove_column("col1")
+    data_dust = np.array(t_dust.to_pandas())
+    dust_mean = np.mean(data_dust, axis=0)
+    dust_err = np.abs(np.percentile(data_dust, q=[25, 75], axis=0) - dust_mean)
+    scalar_map = plt.cm.ScalarMappable(norm=colors.Normalize(vmin=np.log10(np.min(_dust_size)), vmax=np.log10(np.max(_dust_size))), cmap=plt.cm.RdYlBu_r)
+    fig = plt.figure(figsize=(8, 7))
+    ax = fig.add_subplot(111)
+    for i in range(len(_dust_size)):
+        this_dust = data_dust[:, i]
+        plt.plot(t_time, this_dust, "-", c=this_dust, color=scalar_map.to_rgba(np.log10(_dust_size[i])), alpha=0.3)
+    
+    ax.set_xlim(-0.001, 1.001)
+    ax.set_ylim(-0.01, 0.5)
+    _xticks = [0.2, 0.5, 1, 2, 5, 10, 20]
+    #ax.set_xticks(np.log10(_xticks))
+    #ax.set_xticklabels(["{}".format(_) for _ in _xticks])
+    ax.set_xlabel("Time/Day")
+    ax.set_ylabel("Particle Counts [Liter$^{-1}$]")
+    ax.set_title("Particle time series @SST [{}]".format(_ystday.isot[:10]))
     fig.tight_layout()
     # savefig
     if os.path.exists(figfp_dust):
@@ -742,7 +787,7 @@ if __name__ == "__main__":
     # sunmoon data
     datafp_sunmoon = "./data/lhsunmoon.dat"
     # sky brightness data
-    datafp_skys = [# "./latest_data/SQMReadings_20180923.txt",
+    datafp_skys = ["./latest_data/SQMReadings_20180923.txt",
                    "./latest_data/SQMReadings.txt",
                    ]
     # wind data
@@ -753,11 +798,11 @@ if __name__ == "__main__":
     datafp_whitelist = "./latest_data/whitelist"
 
     # flagged tsky data
-    datafp_tsky_flagged = "./figs/tsky_flagged_{}.csv".format(year)
+    datafp_tsky_flagged_fmt = "./figs/tsky_flagged_{}.csv"
 
     # figure paths
     figfp_sky_brightness = "./figs/latest_sky_brightness.png"
-    figfp_sky_goodness = "./figs/latest_sky_goodness_{}.png".format(year)
+    figfp_sky_goodness_fmt = "./figs/latest_sky_goodness_{}.png"
     # wind figure
     figfp_wind = "./figs/latest_wind_stat.png"
     # seeing figure
@@ -789,8 +834,10 @@ if __name__ == "__main__":
         f.write(" last entry: " + tsky[-1].isot + "\n")
 
     plot_sky_brightness(tsky, sky, figfp_sky_brightness)
-    tsky_flagged = plot_sky_goodness(tsky, sky, figfp_sky_goodness, wjd0=wjd0, dt_filter=0)
-    tsky_flagged.write(datafp_tsky_flagged, overwrite=True)
+    for year in [2018, 2019, 2020]:
+        print("processing sky goodness of year ", year)
+        tsky_flagged = plot_sky_goodness(tsky, sky, year, figfp_sky_goodness_fmt, wjd0=wjd0, dt_filter=0)
+        tsky_flagged.write(datafp_tsky_flagged_fmt.format(year), overwrite=True)
         
     """ wind stats """
     tws = Table.read(datafp_wind, format="ascii.commented_header")
