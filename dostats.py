@@ -700,8 +700,8 @@ def plot_dust():
         0.7, 0.8, 1., 1.3, 1.6, 2., 2.5, 3., 3.5,
         4., 5., 6.5, 7.5, 8.5, 10., 12.5, 15., 17.5,
         20., 25., 30., 32.])
-    with open(datafp_dust, "r+") as f:
-        s = f.readlines()
+    with open(datafp_dust, "r+") as _f:
+        s = _f.readlines()
     t_dust = Table.read(s, format="ascii.no_header", delimiter="\t")
     t_dust.remove_column("col1")
     data_dust = np.array(t_dust.to_pandas())
@@ -720,7 +720,7 @@ def plot_dust():
     ax.set_xticks(np.log10(_xticks))
     ax.set_xticklabels(["{}".format(_) for _ in _xticks])
     ax.set_xlabel("Particle Size [$\\mu$m]")
-    ax.set_ylabel("Particle Counts [Liter$^{-1}$]")
+    ax.set_ylabel("Particle Counts [$\\mu$g m$^{-3}$]")
     ax.set_title("Particle size spectrum @SST [{}]".format(_ystday.isot[:10]))
     fig.tight_layout()
     # savefig
@@ -741,8 +741,8 @@ def plot_dust_ts():
         0.7, 0.8, 1., 1.3, 1.6, 2., 2.5, 3., 3.5,
         4., 5., 6.5, 7.5, 8.5, 10., 12.5, 15., 17.5,
         20., 25., 30., 32.])
-    with open(datafp_dust, "r+") as f:
-        s = f.readlines()
+    with open(datafp_dust, "r+") as _f:
+        s = _f.readlines()
     t_dust = Table.read(s, format="ascii.no_header", delimiter="\t")
     t_time = Time([_.replace("/", "-") for _ in t_dust["col1"].data], format="iso").mjd-np.floor(_ystday.mjd)
     t_dust.remove_column("col1")
@@ -762,7 +762,7 @@ def plot_dust_ts():
     #ax.set_xticks(np.log10(_xticks))
     #ax.set_xticklabels(["{}".format(_) for _ in _xticks])
     ax.set_xlabel("Time/Day")
-    ax.set_ylabel("Particle Counts [Liter$^{-1}$]")
+    ax.set_ylabel("Particle Counts [$\\mu$g m$^{-3}$]")
     ax.set_title("Particle time series @SST [{}]".format(_ystday.isot[:10]))
     fig.tight_layout()
     # savefig
