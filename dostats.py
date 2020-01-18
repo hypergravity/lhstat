@@ -714,8 +714,8 @@ def plot_dust():
     ax.errorbar(np.log10(_dust_size), dust_mean, yerr=dust_err,
                 marker='s', ms=10, mfc='#1f77b4', mec='#1f77b4',
                 ecolor="gray", elinewidth=5, label="daily mean$\\pm1$quantile")
-    ax.legend()
-    ax.set_ylim(-0.01, 0.5)
+    ax.legend(loc="upper right")
+    ax.set_ylim(-0.01, ax.get_ylim()[1])
     _xticks = [0.2, 0.5, 1, 2, 5, 10, 20]
     ax.set_xticks(np.log10(_xticks))
     ax.set_xticklabels(["{}".format(_) for _ in _xticks])
