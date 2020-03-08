@@ -909,7 +909,7 @@ if __name__ == "__main__":
     tws = Table.read(datafp_wind, format="ascii.commented_header")
     ttws = Time(["{}T{}:00".format(tws["date"][i], tws["time"][i]) for i in range(len(tws))])
     
-    ws = tws["wind_speed_2mins"]
+    ws = tws["wind_speed"]
     wd = tws["wind_direction"]/180*np.pi
     plot_wind(ws, wd, ttws, figfp_wind)
     plot_wind_sub(ws, wd, ttws, nwdbins=24, figfp_wind=figfp_wind)
