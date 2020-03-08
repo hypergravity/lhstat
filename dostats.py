@@ -732,12 +732,13 @@ def plot_dust():
 
 def plot_pm10():
     """ plot dust PM10 """
+    # glob PM10 data
     _ystday = Time(datetime.datetime.now()) - 1
     datafp_pm10 = glob.glob("./latest_data/dust/measurement_*-M.dat")
     datafp_pm10.sort()
     figfp_pm10 = "./figs/latest_pm10.png"
 
-    # read data (yesterday)
+    # read PM10 data
     data_pm10 = []
     for _ in datafp_pm10:
         try:
@@ -761,31 +762,50 @@ def plot_pm10():
     jd_x = np.arange(jd_min, jd_max+1, 1, dtype=float)
     jd_edges = np.arange(jd_min-.5, jd_max+1.5, 1, dtype=float)
 
-    bs_mean = binned_statistic(tjd, pm10, statistic="mean", bins=jd_edges)[0]
+    # quantiles
+    bs_mean = binned_statistic(tjd, pm10, statistic="median", bins=jd_edges)[0]
     bs_max = binned_statistic(tjd, pm10, statistic=np.max, bins=jd_edges)[0]
     bs_min = binned_statistic(tjd, pm10, statistic=np.min, bins=jd_edges)[0]
     bs_16 = binned_statistic(tjd, pm10, statistic=lambda x: np.percentile(x, 16), bins=jd_edges)[0]
     bs_84 = binned_statistic(tjd, pm10, statistic=lambda x: np.percentile(x, 84), bins=jd_edges)[0]
 
+    # read lenghu PM10 data
+    data_pm10_lh = Table.read("./latest_data/lhdust02.dat", format="ascii.no_header")
+    tjd_lh = Time(["{}-{}-{}T12:00:00".format(str(_)[:4], str(_)[4:6], str(_)[6:8])
+                   for _ in data_pm10_lh["col1"]], format="isot").jd
+    pm10_lh = data_pm10_lh["col2"].data
+
     fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111)
-    l50, = ax.semilogy(jd_x, bs_mean, 's-', color="k", alpha=.9, lw=3)
-    l16, = ax.semilogy(jd_x, bs_16, '-', color="k", alpha=.5)
-    ax.semilogy(jd_x, bs_84, '-', color="k", alpha=.5)
-    l00, = ax.semilogy(jd_x, bs_min, '-', color="k", alpha=.2)
-    ax.semilogy(jd_x, bs_max, '-', color="k", alpha=.2)
+    # plot sst aqi
+    llh, = ax.plot(tjd_lh, np.log10(pm10_lh), "rs-", alpha=.5)
+    # fit a line
+    p = np.polyfit(tjd_lh, np.log10(pm10_lh), deg=1)
+    lfit_lh, = ax.plot(tjd_lh, np.polyval(p, tjd_lh), "r--", lw=3)
+
+    # plot lenghu aqi
+    l50, = ax.plot(jd_x, np.log10(bs_mean), 's-', color="k", alpha=.9)
+    l16 = ax.fill_between(jd_x, np.log10(bs_16), np.log10(bs_84), color="k", alpha=.4)
+    l00 = ax.fill_between(jd_x, np.log10(bs_min), np.log10(bs_16), color="k", alpha=.1)
+    l00 = ax.fill_between(jd_x, np.log10(bs_84), np.log10(bs_max), color="k", alpha=.1)
+    # fit a line
+    p = np.polyfit(jd_x, np.log10(bs_mean), deg=1)
+    lfit, = ax.plot(jd_x, np.polyval(p, jd_x), "k--", lw=3)
+
     ax.set_xlabel("Date")
-    ax.set_ylabel("PM10 [?]")
-    ax.legend([l50, l16, l00],
-              ["daily mean", "daily 16/84th pct", "daily min/max"],
-              framealpha=.5)
+    ax.set_ylabel("AQI(PM10 $\\mu$g m$^{-3}$)")
+    ax.legend([llh, lfit_lh, l50, l16, l00, lfit],
+              ["LH daily", "LH fitted", "SST daily median", "SST daily 16/84th pct", "SST daily min/max", "SST fitted"],
+              framealpha=0)
     ax.set_xlim(jd_min-1, jd_max+1)
 
     jd2dates = np.array([_[:10] for _ in Time(jd_x, format="jd").isot])
     jd_ticks_ind = [True if _[-2:] in ["01", "11", "21"] else False for _ in jd2dates]
     ax.set_xticks(jd_x[jd_ticks_ind])
     ax.set_xticklabels(jd2dates[jd_ticks_ind], rotation=45, fontsize=10)
-    ax.set_title("PM10 stats @SST [{}]".format(_ystday.isot[:10]))
+    ax.set_yticks(np.linspace(-1, 3, 5))
+    ax.set_yticklabels(["0.1", "1.0", "10", "100", "1000"])
+    ax.set_title("Dust daily stats: Lenghu vs SST-site [{}]".format(_ystday.isot[:10]))
     fig.tight_layout()
 
     # savefig
@@ -821,7 +841,7 @@ def plot_dust_ts():
     for i in range(len(_dust_size)):
         this_dust = data_dust[:, i]
         plt.plot(t_time, this_dust, "-", c=this_dust, color=scalar_map.to_rgba(np.log10(_dust_size[i])), alpha=0.3)
-    
+
     ax.set_xlim(-0.001, 1.001)
     ax.set_ylim(-0.01, 0.5)
     _xticks = [0.2, 0.5, 1, 2, 5, 10, 20]
