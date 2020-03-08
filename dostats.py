@@ -730,7 +730,7 @@ def plot_dust():
     fig.savefig(figfp_dust)
 
 
-def plot_dust_pm10():
+def plot_pm10():
     """ plot dust PM10 """
     _ystday = Time(datetime.datetime.now()) - 1
     datafp_pm10 = glob.glob("./latest_data/dust/measurement_*-M.dat")
