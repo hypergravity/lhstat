@@ -6,18 +6,6 @@ Created on %(date)s
 @author: %(username)s
 """
 
-# %%
-# %pylab
-# %load_ext autoreload
-# %autoreload 2
-# %reload_ext autoreload
-#
-# import sys
-# year = np.int(sys.argv[1])
-# assert 2018<=year<=2020
-
-
-""" read sun-moon data """
 import datetime
 import glob
 import os
@@ -27,12 +15,10 @@ import numpy as np
 from astroML.stats import binned_statistic
 from astropy import table
 from astropy.table import Table, Column
-# import time
 from astropy.time import Time
 from matplotlib import colors
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
-# from scipy.stats import binned_statistic
 from scipy import signal
 from scipy.stats import binned_statistic_2d
 
