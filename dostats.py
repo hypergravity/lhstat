@@ -730,6 +730,45 @@ def plot_dust():
     fig.savefig(figfp_dust)
 
 
+def plot_aqi_daily():
+    """ plot dust PM10 """
+    # glob PM10 data
+    _today = Time(datetime.datetime.now())
+    datafp_pm10 = glob.glob("./latest_data/dust/measurement_*-M.dat")
+    datafp_pm10.sort()
+    figfp_pm10 = "./figs/latest_aqi_daily.png"
+
+    data_pm10 = Table.read(datafp_pm10[-2], format="ascii.no_header", delimiter="\t", names=["t", "pm10", "pm2p5", "pm1p0"])
+    t_isot = []
+    for i in range(len(data_pm10)):
+        s = data_pm10["t"][i]
+        s_splitted = [np.int(str(_)) for _ in re.split(r"[\s\b-\/:]", s)]
+        t_isot.append("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}".format(*s_splitted))
+    tmjd = Time(t_isot, format="isot").mjd
+    tmjd1 = tmjd - np.floor(tmjd)
+    thour = tmjd1 * 24
+
+    fig = plt.figure(figsize=(16 * .7, 9 * .7))
+    ax = fig.add_subplot(111)
+    l100, = ax.semilogy(thour, data_pm10["pm10"], ".-", alpha=0.5, label="PM10")
+    l025, = ax.semilogy(thour, data_pm10["pm2p5"], ".-", alpha=0.5, label="PM2.5")
+    l010, = ax.semilogy(thour, data_pm10["pm1p0"], ".-", alpha=0.5, label="PM1.0")
+    ax.legend()
+    ax.set_xlim(0, 24)
+    ax.set_xticks(np.linspace(0, 24, 13))
+    ax.set_ylim(0.1, 1000)
+    ax.set_xlabel("Hour")
+    ax.set_ylabel("Dust grain concentration [$\\mu$g m$^{-3}$]")
+    ax.set_title("AQI of SST: {}".format(os.path.basename(datafp_pm10[-2])))
+    fig.tight_layout()
+
+    # savefig
+    if os.path.exists(figfp_pm10):
+        os.remove(figfp_pm10)
+    fig.savefig(figfp_pm10)
+    return
+
+
 def plot_aqi_stats():
     """ plot dust PM10 """
     # glob PM10 data
@@ -746,7 +785,7 @@ def plot_aqi_stats():
         except Exception:
             print("Error occurs when parsing", _)
     data_pm10 = table.vstack(data_pm10)
-    data_pm10.rename_columns(["col1", "col2", "col3", "col4", ], ["t", "pm10", "pmx", "pmy"])
+    data_pm10.rename_columns(["col1", "col2", "col3", "col4", ], ["t", "pm10", "pm2p5", "pm1p0"])
     # fix time string
     t_isot = []
     for i in range(len(data_pm10)):
@@ -950,6 +989,7 @@ if __name__ == "__main__":
 
     """ dust stats """
     plot_dust()
+    plot_aqi_daily()
     plot_aqi_stats()
 
     """ close all figures """
