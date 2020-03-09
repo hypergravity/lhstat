@@ -730,28 +730,28 @@ def plot_dust():
     fig.savefig(figfp_dust)
 
 
-def plot_pm10():
+def plot_aqi_stats():
     """ plot dust PM10 """
     # glob PM10 data
-    _ystday = Time(datetime.datetime.now()) - 1
+    _today = Time(datetime.datetime.now())
     datafp_pm10 = glob.glob("./latest_data/dust/measurement_*-M.dat")
     datafp_pm10.sort()
-    figfp_pm10 = "./figs/latest_pm10.png"
+    figfp_pm10 = "./figs/latest_aqi_stats.png"
 
     # read PM10 data
     data_pm10 = []
     for _ in datafp_pm10:
         try:
-            data_pm10.append(Table.read(_,format="ascii.no_header",delimiter="\t"))
+            data_pm10.append(Table.read(_, format="ascii.no_header", delimiter="\t"))
         except Exception:
             print("Error occurs when parsing", _)
     data_pm10 = table.vstack(data_pm10)
-    data_pm10.rename_columns(["col1","col2","col3","col4",], ["t", "pm10", "pmx", "pmy"])
+    data_pm10.rename_columns(["col1", "col2", "col3", "col4", ], ["t", "pm10", "pmx", "pmy"])
     # fix time string
     t_isot = []
     for i in range(len(data_pm10)):
         s = data_pm10["t"][i]
-        s_splitted = [np.int(str(_)) for _ in re.split(r"[\s\b-\/:]",s)]
+        s_splitted = [np.int(str(_)) for _ in re.split(r"[\s\b-\/:]", s)]
         t_isot.append("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}".format(*s_splitted))
     data_pm10.add_column(Time(t_isot), name="t_isot")
 
@@ -763,7 +763,8 @@ def plot_pm10():
     jd_edges = np.arange(jd_min-.5, jd_max+1.5, 1, dtype=float)
 
     # quantiles
-    bs_mean = binned_statistic(tjd, pm10, statistic="median", bins=jd_edges)[0]
+    bs_median = binned_statistic(tjd, pm10, statistic="median", bins=jd_edges)[0]
+    bs_mean = binned_statistic(tjd, pm10, statistic="mean", bins=jd_edges)[0]
     bs_max = binned_statistic(tjd, pm10, statistic=np.max, bins=jd_edges)[0]
     bs_min = binned_statistic(tjd, pm10, statistic=np.min, bins=jd_edges)[0]
     bs_16 = binned_statistic(tjd, pm10, statistic=lambda x: np.percentile(x, 16), bins=jd_edges)[0]
@@ -775,7 +776,7 @@ def plot_pm10():
                    for _ in data_pm10_lh["col1"]], format="isot").jd
     pm10_lh = data_pm10_lh["col2"].data
 
-    fig = plt.figure(figsize=(8, 7))
+    fig = plt.figure(figsize=(16*.7, 9*.7))
     ax = fig.add_subplot(111)
     # plot sst aqi
     llh, = ax.plot(tjd_lh, np.log10(pm10_lh), "rs-", alpha=.5)
@@ -784,19 +785,24 @@ def plot_pm10():
     lfit_lh, = ax.plot(tjd_lh, np.polyval(p, tjd_lh), "r--", lw=3)
 
     # plot lenghu aqi
-    l50, = ax.plot(jd_x, np.log10(bs_mean), 's-', color="k", alpha=.9)
+    lmedian, = ax.plot(jd_x, np.log10(bs_median), 's-', color="k", alpha=.9)
+    lmean, = ax.plot(jd_x, np.log10(bs_mean), 's-', color="b", alpha=.5)
     l16 = ax.fill_between(jd_x, np.log10(bs_16), np.log10(bs_84), color="k", alpha=.4)
     l00 = ax.fill_between(jd_x, np.log10(bs_min), np.log10(bs_16), color="k", alpha=.1)
     l00 = ax.fill_between(jd_x, np.log10(bs_84), np.log10(bs_max), color="k", alpha=.1)
     # fit a line
+    p = np.polyfit(jd_x, np.log10(bs_median), deg=1)
+    lfit_median, = ax.plot(jd_x, np.polyval(p, jd_x), "k--", lw=3)
     p = np.polyfit(jd_x, np.log10(bs_mean), deg=1)
-    lfit, = ax.plot(jd_x, np.polyval(p, jd_x), "k--", lw=3)
+    lfit_mean, = ax.plot(jd_x, np.polyval(p, jd_x), "b--", lw=3, alpha=.5)
 
     ax.set_xlabel("Date")
     ax.set_ylabel("AQI(PM10 $\\mu$g m$^{-3}$)")
-    ax.legend([llh, lfit_lh, l50, l16, l00, lfit],
-              ["LH daily", "LH fitted", "SST daily median", "SST daily 16/84th pct", "SST daily min/max", "SST fitted"],
-              framealpha=0)
+    ax.legend([llh, lfit_lh, lmedian, lmean,
+               l16, l00, lfit_median, lfit_mean],
+              ["LH daily mean", "LH mean fitted", "SST daily median", "SST daily mean",
+               "SST daily 16/84th pct", "SST daily min/max", "SST median fitted", "SST mean fitted"],
+              framealpha=0, fontsize=10)
     ax.set_xlim(jd_min-1, jd_max+1)
 
     jd2dates = np.array([_[:10] for _ in Time(jd_x, format="jd").isot])
@@ -805,7 +811,7 @@ def plot_pm10():
     ax.set_xticklabels(jd2dates[jd_ticks_ind], rotation=45, fontsize=10)
     ax.set_yticks(np.linspace(-1, 3, 5))
     ax.set_yticklabels(["0.1", "1.0", "10", "100", "1000"])
-    ax.set_title("Dust daily stats: Lenghu vs SST-site [{}]".format(_ystday.isot[:10]))
+    ax.set_title("Dust daily stats: Lenghu vs SST-site [{}]".format(_today.isot[:10]))
     fig.tight_layout()
 
     # savefig
@@ -944,7 +950,7 @@ if __name__ == "__main__":
 
     """ dust stats """
     plot_dust()
-    plot_pm10()
+    plot_aqi_stats()
 
     """ close all figures """
     plt.close("all")
