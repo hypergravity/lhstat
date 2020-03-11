@@ -1,5 +1,6 @@
 latest_data/
 figs/
+*.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
