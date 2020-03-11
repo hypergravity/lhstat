@@ -847,7 +847,7 @@ def plot_aqi_stats():
               ["LH daily mean", "LH mean fitted", "SST daily median", "SST daily mean",
                "SST daily 16/84th pct", "SST daily min/max", "SST median fitted", "SST mean fitted"],
               framealpha=0, fontsize=10)
-    ax.set_xlim(jd_min - 1, jd_max + 1)
+    ax.set_xlim(jd_min - .1, jd_max + .1)
 
     jd2dates = np.array([_[:10] for _ in Time(jd_x, format="jd").isot])
     jd_ticks_ind = [True if _[-2:] in ["01", "11", "21"] else False for _ in jd2dates]
