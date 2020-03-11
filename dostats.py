@@ -788,7 +788,14 @@ def plot_aqi_stats():
         try:
             data_pm10.append(Table.read(_, format="ascii.no_header", delimiter="\t"))
         except Exception:
-            print("Error occurs when parsing", _)
+            # 2019-12-27 file has a header
+            if os.path.basename(_) == "measurement_2019-12-27-M.dat":
+                with open(_, "r+") as f:
+                    s = f.readlines()
+                    data_pm10.append(Table.read(s[14:], format="ascii.no_header", delimiter="\t"))
+            else:
+                raise RuntimeError("error occurs when parsing", _)
+            
     data_pm10 = table.vstack(data_pm10)
     data_pm10.rename_columns(["col1", "col2", "col3", "col4", ], ["t", "pm10", "pm2p5", "pm1p0"])
     # fix time string
@@ -847,7 +854,7 @@ def plot_aqi_stats():
               ["LH daily mean", "LH mean fitted", "SST daily median", "SST daily mean",
                "SST daily 16/84th pct", "SST daily min/max", "SST median fitted", "SST mean fitted"],
               framealpha=0, fontsize=10)
-    ax.set_xlim(jd_min - .1, jd_max + .1)
+    ax.set_xlim(jd_min - .2, jd_max + .2)
 
     jd2dates = np.array([_[:10] for _ in Time(jd_x, format="jd").isot])
     jd_ticks_ind = [True if _[-2:] in ["01", "11", "21"] else False for _ in jd2dates]
@@ -913,7 +920,7 @@ if __name__ == "__main__":
 
     year = 2019
 
-    if os.uname()[1] in ["T7610", "Bos-MacBook-Pro.local"]:
+    if os.uname()[1] in ["T7610", "MBP16.local"]:
         # working dir
         dir_work = os.getenv("HOME") + "/PycharmProjects/lhstat"
     else:  # on ali server
@@ -952,8 +959,8 @@ if __name__ == "__main__":
 
     """ read sunmoon data
     t0: local date
-    t1: astronomy
-    t2: sailing
+    t1: astronomical
+    t2: nautical
     t3: civil
     tmoon: moon rise and set
     """
