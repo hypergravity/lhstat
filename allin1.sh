@@ -7,7 +7,8 @@ cd /root/lhstat
 bash update_data_ecs.sh
 
 # do stats
-ipython dostats.py
+ipython ./lhstat/dostats.py
+ipython ./lhstat/proc_sqm_wind.py
 
 # save a copy for today
 mkdir -p ./figs/`date +%Y%m%d`
