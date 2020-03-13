@@ -10,8 +10,9 @@ bash update_data_ecs.sh
 ipython ./lhstat/dostats.py
 ipython ./lhstat/proc_sqm_wind.py
 
+echo "DONE!!!"
 # save a copy for today
-mkdir -p ./figs/`date +%Y%m%d`
-cp ./figs/*.png ./figs/`date +%Y%m%d`/
-cp ./latest_data/* ./figs/`date +%Y%m%d`/
+#mkdir -p ./figs/`date +%Y%m%d`
+#cp ./figs/*.png ./figs/`date +%Y%m%d`/
+#cp ./latest_data/* ./figs/`date +%Y%m%d`/
 #tail ./latest_data/* > ./log/`date +%Y%m%d%H%M%S`.log
