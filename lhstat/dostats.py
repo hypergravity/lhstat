@@ -250,11 +250,10 @@ def plot_aqi_stats():
 
     ax.set_xlabel("Date")
     ax.set_ylabel("AQI(PM10 $\\mu$g m$^{-3}$)")
-    ax.legend([llh, lfit_lh, lmedian, lmean,
-               l16, l00, lfit_median, lfit_mean],
-              ["LH daily mean", "LH mean fitted", "SST daily median", "SST daily mean",
-               "SST daily 16/84th pct", "SST daily min/max", "SST median fitted", "SST mean fitted"],
-              framealpha=0, fontsize=10)
+    ax.legend([llh, lmedian, lmean, l16, l00],
+              ["LH daily mean", "SST daily median", "SST daily mean",
+               "SST daily 16/84th pct", "SST daily min/max"],
+              framealpha=0, fontsize=10, loc="upper left")
     ax.set_xlim(jd_min - .2, jd_max + .2)
 
     jd2dates = np.array([_[:10] for _ in Time(jd_x, format="jd").isot])
