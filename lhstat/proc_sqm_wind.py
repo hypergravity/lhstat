@@ -628,6 +628,7 @@ if __name__ == "__main__":
     # sky brightness data
     datafp_skys = ["./latest_data/SQMReadings_20180923.txt",
                    "./latest_data/SQMReadings.txt",
+                   "./latest_data/sqm_ext.txt",
                    ]
     # seeing data
     datafp_seeing = "./latest_data/Seeing_Data.txt"
