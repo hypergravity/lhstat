@@ -660,6 +660,10 @@ if __name__ == "__main__":
     sky_tstr = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in
                 range(len(sky))]
     tsky = Time(sky_tstr)
+    # sort data
+    insort = np.argsort(tsky.jd)
+    tsky = tsky[insort]
+    sky = sky[insort]
 
     # log info
     # with open("./{}.log".format(datetime.datetime.now().isoformat()), "w+") as f:
