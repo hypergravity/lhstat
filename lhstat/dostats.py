@@ -156,13 +156,17 @@ def plot_aqi_daily():
 
     fig = plt.figure(figsize=(16 * .7, 9 * .7))
     ax = fig.add_subplot(111)
-    l100, = ax.semilogy(thour, data_pm10["pm10"], ".-", alpha=0.5, label="PM10")
-    l025, = ax.semilogy(thour, data_pm10["pm2p5"], ".-", alpha=0.5, label="PM2.5")
-    l010, = ax.semilogy(thour, data_pm10["pm1p0"], ".-", alpha=0.5, label="PM1.0")
+    l100, = ax.plot(thour, np.log10(data_pm10["pm10"]), ".-", alpha=0.5, label="PM10")
+    l025, = ax.plot(thour, np.log10(data_pm10["pm2p5"]), ".-", alpha=0.5, label="PM2.5")
+    l010, = ax.plot(thour, np.log10(data_pm10["pm1p0"]), ".-", alpha=0.5, label="PM1.0")
     ax.legend()
     ax.set_xlim(0, 24)
     ax.set_xticks(np.linspace(0, 24, 13))
-    ax.set_ylim(0.1, 1000)
+    ax.set_ylim(-1, 3)
+    yticks = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10, 20, 50, 100, 200, 500, 1000]
+    yticklabels = ["0.1", "0.2", "0.5", "1.0", "2.0", "5.0", "10", "20", "50", "100", "200", "500", "1000"]
+    ax.set_yticks(np.log10(yticks))
+    ax.set_yticklabels(yticklabels)
     ax.set_xlabel("Hour")
     ax.set_ylabel("Dust grain concentration [$\\mu$g m$^{-3}$]")
     ax.set_title("AQI of SST: {}".format(os.path.basename(datafp_pm10[-2])))
@@ -260,8 +264,11 @@ def plot_aqi_stats():
     jd_ticks_ind = [True if _[-2:] in ["01", "11", "21"] else False for _ in jd2dates]
     ax.set_xticks(jd_x[jd_ticks_ind])
     ax.set_xticklabels(jd2dates[jd_ticks_ind], rotation=45, fontsize=10)
-    ax.set_yticks(np.linspace(-1, 3, 5))
-    ax.set_yticklabels(["0.1", "1.0", "10", "100", "1000"])
+    yticks = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10, 20, 50, 100, 200, 500, 1000]
+    yticklabels = ["0.1", "0.2", "0.5", "1.0", "2.0", "5.0", "10", "20", "50", "100", "200", "500", "1000"]
+    ax.set_yticks(np.log10(yticks))
+    ax.set_yticklabels(yticklabels)
+    ax.set_ylim(-1, 3)
     ax.set_title("Dust daily stats: Lenghu vs SST-site [{}]".format(_today.isot[:10]))
     fig.tight_layout()
 
@@ -271,49 +278,49 @@ def plot_aqi_stats():
     fig.savefig(figfp_pm10)
 
 
-def plot_dust_ts():
-    """ plot dust DEPRECATED """
-    _ystday = Time(datetime.datetime.now()) - 1
-    datafp_dust = "./latest_data/dust/measurement_{}-dM.dat".format(
-        _ystday.isot[:10])
-    figfp_dust = "./figs/latest_dust_ts.png"
-
-    # read data (yesterday)
-    _dust_size = np.array([
-        0.25, 0.28, 0.3, 0.35, 0.4, 0.45, 0.5, 0.58, 0.65,
-        0.7, 0.8, 1., 1.3, 1.6, 2., 2.5, 3., 3.5,
-        4., 5., 6.5, 7.5, 8.5, 10., 12.5, 15., 17.5,
-        20., 25., 30., 32.])
-    with open(datafp_dust, "r+") as _f:
-        s = _f.readlines()
-    t_dust = Table.read(s, format="ascii.no_header", delimiter="\t")
-    t_time = Time([_.replace("/", "-") for _ in t_dust["col1"].data], format="iso").mjd - np.floor(_ystday.mjd)
-    t_dust.remove_column("col1")
-    data_dust = np.array(t_dust.to_pandas())
-    dust_mean = np.mean(data_dust, axis=0)
-    dust_err = np.abs(np.percentile(data_dust, q=[25, 75], axis=0) - dust_mean)
-    scalar_map = plt.cm.ScalarMappable(
-        norm=colors.Normalize(vmin=np.log10(np.min(_dust_size)), vmax=np.log10(np.max(_dust_size))),
-        cmap=plt.cm.RdYlBu_r)
-    fig = plt.figure(figsize=(8, 7))
-    ax = fig.add_subplot(111)
-    for i in range(len(_dust_size)):
-        this_dust = data_dust[:, i]
-        plt.plot(t_time, this_dust, "-", c=this_dust, color=scalar_map.to_rgba(np.log10(_dust_size[i])), alpha=0.3)
-
-    ax.set_xlim(-0.001, 1.001)
-    ax.set_ylim(-0.01, 0.5)
-    _xticks = [0.2, 0.5, 1, 2, 5, 10, 20]
-    # ax.set_xticks(np.log10(_xticks))
-    # ax.set_xticklabels(["{}".format(_) for _ in _xticks])
-    ax.set_xlabel("Time/Day")
-    ax.set_ylabel("Particle Counts [$\\mu$g m$^{-3}$]")
-    ax.set_title("Particle time series @SST [{}]".format(_ystday.isot[:10]))
-    fig.tight_layout()
-    # savefig
-    if os.path.exists(figfp_dust):
-        os.remove(figfp_dust)
-    fig.savefig(figfp_dust)
+# def plot_dust_ts():
+#     """ plot dust DEPRECATED """
+#     _ystday = Time(datetime.datetime.now()) - 1
+#     datafp_dust = "./latest_data/dust/measurement_{}-dM.dat".format(
+#         _ystday.isot[:10])
+#     figfp_dust = "./figs/latest_dust_ts.png"
+#
+#     # read data (yesterday)
+#     _dust_size = np.array([
+#         0.25, 0.28, 0.3, 0.35, 0.4, 0.45, 0.5, 0.58, 0.65,
+#         0.7, 0.8, 1., 1.3, 1.6, 2., 2.5, 3., 3.5,
+#         4., 5., 6.5, 7.5, 8.5, 10., 12.5, 15., 17.5,
+#         20., 25., 30., 32.])
+#     with open(datafp_dust, "r+") as _f:
+#         s = _f.readlines()
+#     t_dust = Table.read(s, format="ascii.no_header", delimiter="\t")
+#     t_time = Time([_.replace("/", "-") for _ in t_dust["col1"].data], format="iso").mjd - np.floor(_ystday.mjd)
+#     t_dust.remove_column("col1")
+#     data_dust = np.array(t_dust.to_pandas())
+#     dust_mean = np.mean(data_dust, axis=0)
+#     dust_err = np.abs(np.percentile(data_dust, q=[25, 75], axis=0) - dust_mean)
+#     scalar_map = plt.cm.ScalarMappable(
+#         norm=colors.Normalize(vmin=np.log10(np.min(_dust_size)), vmax=np.log10(np.max(_dust_size))),
+#         cmap=plt.cm.RdYlBu_r)
+#     fig = plt.figure(figsize=(8, 7))
+#     ax = fig.add_subplot(111)
+#     for i in range(len(_dust_size)):
+#         this_dust = data_dust[:, i]
+#         plt.plot(t_time, this_dust, "-", c=this_dust, color=scalar_map.to_rgba(np.log10(_dust_size[i])), alpha=0.3)
+#
+#     ax.set_xlim(-0.001, 1.001)
+#     ax.set_ylim(-0.01, 0.5)
+#     _xticks = [0.2, 0.5, 1, 2, 5, 10, 20]
+#     # ax.set_xticks(np.log10(_xticks))
+#     # ax.set_xticklabels(["{}".format(_) for _ in _xticks])
+#     ax.set_xlabel("Time/Day")
+#     ax.set_ylabel("Particle Counts [$\\mu$g m$^{-3}$]")
+#     ax.set_title("Particle time series @SST [{}]".format(_ystday.isot[:10]))
+#     fig.tight_layout()
+#     # savefig
+#     if os.path.exists(figfp_dust):
+#         os.remove(figfp_dust)
+#     fig.savefig(figfp_dust)
 
 
 if __name__ == "__main__":
