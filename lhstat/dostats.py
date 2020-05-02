@@ -230,10 +230,20 @@ def plot_aqi_stats():
     bs_84 = binned_statistic(tjd, pm10, statistic=lambda x: np.percentile(x, 84), bins=jd_edges)[0]
 
     # read lenghu PM10 data
-    data_pm10_lh = Table.read("./latest_data/lhdust02.dat", format="ascii.no_header")
+    with open("./latest_data/lhdust02.dat", "r") as f:
+        slist = f.readlines()
+    data_date = []
+    pm10_lh = []
+    for s in slist:
+        s = s.replace("\n", "").split(" ")
+        while "" in s:
+            s.remove("")
+        data_date.append(s[0])
+        pm10_lh.append(np.float(s[1]))
+    # format pm10 and time data
+    pm10_lh = np.array(pm10_lh)
     tjd_lh = Time(["{}-{}-{}T12:00:00".format(str(_)[:4], str(_)[4:6], str(_)[6:8])
-                   for _ in data_pm10_lh["col1"]], format="isot").jd
-    pm10_lh = data_pm10_lh["col2"].data
+                   for _ in data_date], format="isot").jd
 
     fig = plt.figure(figsize=(16 * .7, 9 * .7))
     ax = fig.add_subplot(111)
