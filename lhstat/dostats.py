@@ -181,6 +181,9 @@ def plot_aqi_daily():
 
 def plot_aqi_stats():
     """ plot dust PM10 """
+    rcParams.update({'ytick.right': True,
+                     'ytick.minor.right': True,
+                     })
     # glob PM10 data
     _today = Time(datetime.datetime.now())
     datafp_pm10 = glob.glob("./latest_data/dust/measurement_*-M.dat")
@@ -264,8 +267,15 @@ def plot_aqi_stats():
     jd_ticks_ind = [True if _[-2:] in ["01", "11", "21"] else False for _ in jd2dates]
     ax.set_xticks(jd_x[jd_ticks_ind])
     ax.set_xticklabels(jd2dates[jd_ticks_ind], rotation=45, fontsize=10)
-    yticks = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10, 20, 50, 100, 200, 500, 1000]
-    yticklabels = ["0.1", "0.2", "0.5", "1.0", "2.0", "5.0", "10", "20", "50", "100", "200", "500", "1000"]
+    yticks = [*np.arange(0.1, 1, 0.1),
+              *np.arange(1.0, 10, 1),
+              *np.arange(10, 100, 10),
+              *np.arange(100, 1000, 100), 1000]
+    yticklabels = ["0.1", *["" for _ in range(8)],
+                   "1", *["" for _ in range(8)],
+                   "10", *["" for _ in range(8)],
+                   "100", *["" for _ in range(8)],
+                   "1000"]
     ax.set_yticks(np.log10(yticks))
     ax.set_yticklabels(yticklabels)
     ax.set_ylim(-1, 3)
@@ -276,6 +286,12 @@ def plot_aqi_stats():
     if os.path.exists(figfp_pm10):
         os.remove(figfp_pm10)
     fig.savefig(figfp_pm10)
+
+    rcParams.update({'ytick.right': False,
+                     'ytick.minor.right': False,
+                     })
+
+    return
 
 
 # def plot_dust_ts():
