@@ -187,16 +187,21 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
 
 
 def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png", wjd0=[],
-                      dt_filter=0):
+                      dt_filter=0, fjd_dates=None):
     figfp_sky_goodness = figfp_sky_goodness_fmt.format(year)
 
     # start & end of the year, say 2019
-    if year == 2018:
-        fjd0 = np.floor(Time("{:04d}-03-30T12:00:00.000".format(year), format="isot").jd)
-        fjd1 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
+    # fjd_dates = "2018-04-01","2020-05-05"
+    if fjd_dates is None:
+        if year == 2018:
+            fjd0 = np.floor(Time("{:04d}-03-30T12:00:00.000".format(year), format="isot").jd)
+            fjd1 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
+        else:
+            fjd0 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
+            fjd1 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
     else:
-        fjd0 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year), format="isot").jd)
-        fjd1 = np.floor(Time("{:04d}-01-01T12:00:00.000".format(year + 1), format="isot").jd)
+        fjd0 = np.floor(Time("{}T12:00:00.000".format(fjd_dates[0]), format="isot").jd)
+        fjd1 = np.floor(Time("{}T12:00:00.000".format(fjd_dates[1]), format="isot").jd)
 
     # day / night in tsky
     ind_day = isdaytime(tsky_, t1)
@@ -221,7 +226,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
     # plotting parameters
-    lw = 3
+    lw = 2
 
     # smoothing parameters
     threshold = 0.03
@@ -375,13 +380,17 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
     ax.set_ylim(0.2, .9)
 
     # ax.vlines(jd_now, 0.2,.9, linestyle="dashed", colors="k", zorder=4, alpha=0.5)
+    # xtick_times = Time(["{:04d}-{:02d}-01T01:01:00.000".format(year, _) for _ in np.arange(1, 13)], format="isot")
 
-    xtick_times = Time(["{:04d}-{:02d}-01T01:01:00.000".format(year, _) for _ in np.arange(1, 13)], format="isot")
-    xtick_fjd = np.floor(xtick_times.jd)
-    ax.set_xticks(xtick_fjd)
-    xtick_labels = [_[:7] for _ in xtick_times.isot]
+    monthticks = Time(np.arange(fjd0, fjd1 + 1), format="jd")
+    ind_01 = np.array([_[8:10]=="01" for _ in monthticks.isot])
+
+    # xtick_fjd = np.floor(xtick_times.jd)
+    xtick_fjd = monthticks[ind_01]
+    ax.set_xticks(xtick_fjd.jd)
+    xtick_labels = [_[:7] for _ in xtick_fjd.isot]
     ax.set_xticklabels(xtick_labels, rotation=45)
-    ax.set_xlim(xtick_fjd[0] - 2, xtick_fjd[-1] + 33)
+    ax.set_xlim(xtick_fjd[0].jd - 2, xtick_fjd[-1].jd + 2)
 
     ax.set_title("Observing time (Astronomical twilights) stat @ SST")
     afontsize = 20
@@ -395,6 +404,8 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
                 fontsize=afontsize)
     ax.annotate("N(photometric/bad/down/tbd): {}/{}/{}/{}".format(count_good, count_bad, count_down, count_tbd),
                 xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
+    # ax.annotate("N(photometric/bad/down): {}/{}/{}".format(count_good, count_bad, count_down, count_tbd),
+    #             xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
 
     # add legend
     lgood = ax.plot([0, 0], [1, 1], "-", lw=lw, color="cyan", label="good")
@@ -404,6 +415,9 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
     ax.legend([lgood[0], lbad[0], ldown[0], ltbd[0]],
               ["photometric", "bad", "down", "tbd"],
               loc="upper center", framealpha=0, fontsize=afontsize * 0.6)
+    # ax.legend([lgood[0], lbad[0], ldown[0]],
+    #           ["photometric", "bad", "down"],
+    #           loc="upper center", framealpha=0, fontsize=afontsize * 0.6)
 
     fig.tight_layout()
 
