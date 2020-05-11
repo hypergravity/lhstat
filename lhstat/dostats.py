@@ -250,7 +250,8 @@ def plot_aqi_stats():
     # plot sst aqi
     llh, = ax.plot(tjd_lh, np.log10(pm10_lh), "rs-", alpha=.5)
     # fit a line
-    p = np.polyfit(tjd_lh, np.log10(pm10_lh), deg=1)
+    indfit = np.isfinite(pm10_lh)
+    p = np.polyfit(tjd_lh[indfit], np.log10(pm10_lh[indfit]), deg=1)
     lfit_lh, = ax.plot(tjd_lh, np.polyval(p, tjd_lh), "r--", lw=3)
 
     # plot lenghu aqi
@@ -260,9 +261,11 @@ def plot_aqi_stats():
     l00 = ax.fill_between(jd_x, np.log10(bs_min), np.log10(bs_16), color="k", alpha=.1)
     l00 = ax.fill_between(jd_x, np.log10(bs_84), np.log10(bs_max), color="k", alpha=.1)
     # fit a line
-    p = np.polyfit(jd_x, np.log10(bs_median), deg=1)
+    indfit = np.isfinite(bs_median)
+    p = np.polyfit(jd_x[indfit], np.log10(bs_median[indfit]), deg=1)
     lfit_median, = ax.plot(jd_x, np.polyval(p, jd_x), "k--", lw=3)
-    p = np.polyfit(jd_x, np.log10(bs_mean), deg=1)
+    indfit = np.isfinite(bs_median)
+    p = np.polyfit(jd_x[indfit], np.log10(bs_mean[indfit]), deg=1)
     lfit_mean, = ax.plot(jd_x, np.polyval(p, jd_x), "b--", lw=3, alpha=.5)
 
     ax.set_xlabel("Date")
