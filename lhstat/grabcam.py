@@ -103,16 +103,14 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:
         dt_today = datetime.now()
-        t_today = Time("{:04d}-{:02d}-{:02d}T12:00:00".format(
-            dt_today.year, dt_today.month, dt_today.day), format="isot")
-        t_yesterday = t_today- TimeDelta(1, format="jd")
-        dt_yesterday = t_yesterday.to_datetime()
     else:
-        dt_today = sys.argv[1]
-        t_today = Time("{}-{}-{}T12:00:00".format(
-            dt_today[0:4], dt_today[4:6], dt_today[6:8]), format="isot")
-        t_yesterday = t_today - TimeDelta(1, format="jd")
-        dt_yesterday = t_yesterday.to_datetime()
+        dt_today = datetime(np.int(sys.argv[1][:4]),
+                            np.int(sys.argv[1][4:6]),
+                            np.int(sys.argv[1][6:8]))
+    t_today = Time("{:04d}-{:02d}-{:02d}T12:00:00".format(
+        dt_today.year, dt_today.month, dt_today.day), format="isot")
+    t_yesterday = t_today- TimeDelta(1, format="jd")
+    dt_yesterday = t_yesterday.to_datetime()
 
     # jd of ev & momonts of last night
     from bisect import bisect
