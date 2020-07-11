@@ -246,6 +246,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
     # now time
     jd_now = Time.now().jd
 
+    print("------- date-time ----- src counts selected")
     for this_jd in np.arange(fjd0, fjd1):
         # look for evening & morning time
         this_ev, this_mn = t1[(t1.jd > this_jd) & (t1.jd < this_jd + 1)]
@@ -270,10 +271,17 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
         # count sky data in this night
         ind_this_night = (tsky > this_ev) & (tsky < this_mn)
         sub_this_night = np.where(ind_this_night)[0]
-        # this_night_bin = (np.linspace(0,1,10)*(this_mn-this_ev)+this_ev).jd
-        # this_night_center = np.diff(this_night_bin)+this_night_bin[:-1]
+        npts = np.sum(ind_this_night)
 
-        if 0 < np.sum(ind_this_night) < 10:
+        if npts > 0:
+            # note: use sqmsrc to selecte SQM source
+            u_sqmsrc, c_sqmsrc = np.unique(sky[ind_this_night]["sqmsrc"].data, return_counts=True)
+            o_sqmsrc = u_sqmsrc[np.argmax(c_sqmsrc)]
+            ind_this_night = (tsky > this_ev) & (tsky < this_mn) & (sky["sqmsrc"] == o_sqmsrc)
+            sub_this_night = np.where(ind_this_night)[0]
+            print(Time(this_jd, format="jd").isot, u_sqmsrc, c_sqmsrc, o_sqmsrc)
+
+        if 0 < npts < 10:
             # worked, but down
             this_time_total = this_mn.jd - this_ev.jd
             time_total += this_time_total
@@ -289,7 +297,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
             count_down += 1
             count_total += 1
 
-        elif 10 <= np.sum(ind_this_night):
+        elif 10 <= npts:
             # worked, worked
 
             # plot background
@@ -629,7 +637,7 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
 
 if __name__ == "__main__":
 
-    if os.uname()[1] in ["T7610", "MBP16.local"]:
+    if os.uname()[1] in ["T7610", "MBP16.local", "localhost"]:
         # working dir
         dir_work = os.getenv("HOME") + "/PycharmProjects/lhstat"
     else:  # on ali server
@@ -670,7 +678,14 @@ if __name__ == "__main__":
     t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
 
     """ sky stats"""
-    sky = table.vstack([read_sky(datafp_sky) for datafp_sky in datafp_skys])
+    sky_list = []
+    for i, _ in enumerate(datafp_skys):
+        print("reading sqm {}".format(_))
+        this_sky = read_sky(_)
+        this_sky.add_column(Column(np.ones(len(this_sky), dtype=int) * i, "sqmsrc"))
+        sky_list.append(this_sky)
+    sky = table.vstack(sky_list)
+
     sky_tstr = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in range(len(sky))]
 
     tsky = Time(sky_tstr)
