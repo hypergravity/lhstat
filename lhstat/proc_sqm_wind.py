@@ -64,7 +64,7 @@ def read_whitelist(fp_whitelist):
 
 
 # sky = Table.read("/home/cham/lh/sqm/SQMReadings_DLH.txt", format="ascii")
-def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
+def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt", sqmsrc=0):
     """ read SQM data """
     with open(fp_sky, "r+") as f:
         lines_sky = f.readlines()
@@ -76,7 +76,19 @@ def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt"):
         if len(lines_sky[i]) > 100:
             lines_sky.pop(i)
     sky = Table.read(lines_sky[1:], format="ascii.basic")
-    return sky
+
+    # add sqm src info
+    sky.add_column(table.Column(np.ones(len(sky), int) * i, "sqmsrc"))
+
+    # add isot/time/jd and sort
+    isot = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in range(len(sky))]
+    # tsky = Time(isot)
+    sky.add_column(table.Column(isot, "isot"))
+    # sky.add_column(table.Column(tsky, "tsky"))
+    # sky.add_column(table.Column(tsky.jd, "jd"))
+    # sky.sort("jd")
+
+    return sky#, tsky
 
 
 def count_delta(t, flag, teps=1e-10):
@@ -136,11 +148,13 @@ def moving_std(x, n_pix=4):
     return xstd
 
 
-def plot_sky_brightness(tsky, sky, figfp_sky_brightness):
+def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_town=None):
     fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111)
-    # all data
-    l1 = ax.plot(np.mod(tsky.jd, 1), sky["MPSAS"], 'k.', alpha=0.8, ms=0.2, label="all data")
+    # lenghu data
+    l1 = ax.plot(np.mod(tsky.jd, 1), sky["MPSAS"], 'k.', alpha=0.8, ms=0.2, label="lh alldata")
+    # town data
+    lt = ax.plot(np.mod(tsqm_town.jd, 1), sqm_town["MPSAS"], 'b.', alpha=0.8, ms=0.2, label="lh town")
 
     #    # yesterday
     #    t_lastnoon = Time(np.round(Time(datetime.now()).jd)-1, format="jd")
@@ -652,6 +666,7 @@ if __name__ == "__main__":
                    "./latest_data/SQMReadings.txt",
                    "./latest_data/sqm_ext.txt",
                    ]
+    datafp_sqm_town = "./latest_data/SQMReadings_lhtown.txt"
     # seeing data
     datafp_seeing = "./latest_data/Seeing_Data.txt"
     # whitelist added on 2019-09-29
@@ -678,28 +693,30 @@ if __name__ == "__main__":
     t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
 
     """ sky stats"""
+    # lenghu
     sky_list = []
     for i, _ in enumerate(datafp_skys):
         print("reading sqm {}".format(_))
-        this_sky = read_sky(_)
-        this_sky.add_column(Column(np.ones(len(this_sky), dtype=int) * i, "sqmsrc"))
+        this_sky = read_sky(_, sqmsrc=i)
         sky_list.append(this_sky)
     sky = table.vstack(sky_list)
-
-    sky_tstr = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in range(len(sky))]
-
-    tsky = Time(sky_tstr)
-    # sort data
+    tsky = Time(sky["isot"].data)
     indsort = np.argsort(tsky.jd)
-    tsky = tsky[indsort]
     sky = sky[indsort]
+    tsky = tsky[indsort]
+    # town
+    sqm_town = read_sky(datafp_sqm_town)
+    tsqm_town = Time(sqm_town["isot"].data)
+    indsort = np.argsort(tsqm_town.jd)
+    sqm_town = sqm_town[indsort]
+    sqm_town = sqm_town[indsort]
 
     # log info
     # with open("./{}.log".format(datetime.datetime.now().isoformat()), "w+") as f:
     #     f.write(" now: " + datetime.datetime.now().isoformat() + "\n")
     #     f.write(" last entry: " + tsky[-1].isot + "\n")
 
-    plot_sky_brightness(tsky, sky, figfp_sky_brightness)
+    plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town, sqm_town)
     for year in [2018, 2019, 2020]:
         print("processing sky goodness of year ", year)
         tsky_flagged = plot_sky_goodness(tsky, sky, year, figfp_sky_goodness_fmt, wjd0=wjd0, dt_filter=0)
