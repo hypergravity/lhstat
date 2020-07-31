@@ -175,7 +175,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     l2_town = ax.plot(np.mod(tsqm_town[ind_lastday].jd, 1), sqm_town["MPSAS"][ind_lastday], '-', color="b", alpha=0.8, ms=0.2,
                       label=date_last + " town")
 
-    ax.legend(loc="lower left", framealpha=0.1)
+    ax.legend(loc="upper center", framealpha=0.1)
 
     _xticks = np.linspace(0, 1, 13)
     _xticklabels = ["{}".format(_ + 4) for _ in np.arange(0, 25, 2)]
@@ -194,7 +194,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     tstr_now = date_last  # Time.now().isot[:10]
     tstr_min = tsky.min().isot[:10]
     tstr_max = date_last  # tsky.max().isot[:10]
-    ax.annotate("{} - {}".format(tstr_min, tstr_max), xy=(0.5, 0.8), xycoords="axes fraction", fontsize=afontsize,
+    ax.annotate("{} - {}".format(tstr_min, tstr_max), xy=(0.5, 0.7), xycoords="axes fraction", fontsize=afontsize,
                 horizontalalignment="center")
 
     fig.tight_layout()
