@@ -6,6 +6,8 @@ rsync -avz root@159.226.170.49:/data/lh/sqm/weather2019.csv ./latest_data/
 rsync -avz root@159.226.170.49:/data/lh/sqm/SQMReadings.txt ./latest_data/
 rsync -avz root@159.226.170.49:/data/lh/sqm/SQMReadings_20180923.txt ./latest_data/
 rsync -avz root@159.226.170.49:/data/lh/sqm/sqm_ext.txt ./latest_data/
+# SQM-town
+rsync -avz root@159.226.170.49:/data/lh/sqm/SQMReadings_lhtown.txt ./latest_data/
 # SQM white list
 rsync -avz root@159.226.170.49:/data/lh/sqm/whitelist ./latest_data/
 # seeing
