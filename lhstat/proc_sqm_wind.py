@@ -153,15 +153,13 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     ax = fig.add_subplot(111)
     # lenghu data
     l1 = ax.plot(np.mod(tsky.jd, 1), sky["MPSAS"], 'k.', alpha=0.8, ms=0.2, label="lh alldata")
-    # town data
-    lt = ax.plot(np.mod(tsqm_town.jd, 1), sqm_town["MPSAS"], 'b.', alpha=0.8, ms=0.2, label="lh town")
 
     #    # yesterday
     #    t_lastnoon = Time(np.round(Time(datetime.now()).jd)-1, format="jd")
     #    ind_lastday = tsky.jd>t_lastnoon.jd
     #    ax.plot(np.mod(tsky[ind_lastday].jd,1), sky["MPSAS"][ind_lastday],'-m',alpha=0.8, ms=0.2)
 
-    # last day
+    # last day - lh
     fjd = np.floor(tsky.jd)
     if np.mod(tsky.jd[-1], 1) > 0.5:
         jd_last = np.unique(fjd)[-1]
@@ -169,9 +167,14 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
         jd_last = np.unique(fjd)[-2]
     ind_lastday = fjd == jd_last
     date_last = Time(jd_last, format="jd").isot[:10]
-
     l2 = ax.plot(np.mod(tsky[ind_lastday].jd, 1), sky["MPSAS"][ind_lastday], '-', color="r", alpha=0.8, ms=0.2,
-                 label=date_last)
+                 label=date_last + " lenghu")
+    # last day - town
+    fjd = np.floor(tsqm_town.jd)
+    ind_lastday = fjd == jd_last
+    l2_town = ax.plot(np.mod(tsqm_town[ind_lastday].jd, 1), sqm_town["MPSAS"][ind_lastday], '-', color="b", alpha=0.8, ms=0.2,
+                      label=date_last + " town")
+
     ax.legend(loc="lower left", framealpha=0.1)
 
     _xticks = np.linspace(0, 1, 13)
