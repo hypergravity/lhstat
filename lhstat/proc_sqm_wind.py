@@ -152,7 +152,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111)
     # lenghu data
-    l1 = ax.plot(np.mod(tsky.jd, 1), sky["MPSAS"], 'k.', alpha=0.8, ms=0.2, label="lh alldata")
+    l1 = ax.plot(np.mod(tsky.jd, 1), sky["MPSAS"], 'k.', alpha=0.8, ms=0.2, label="Lenghu all data")
 
     #    # yesterday
     #    t_lastnoon = Time(np.round(Time(datetime.now()).jd)-1, format="jd")
@@ -168,7 +168,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     ind_lastday = fjd == jd_last
     date_last = Time(jd_last, format="jd").isot[:10]
     l2 = ax.plot(np.mod(tsky[ind_lastday].jd, 1), sky["MPSAS"][ind_lastday], '-', color="r", alpha=0.8, ms=0.2,
-                 label=date_last + " lenghu")
+                 label=date_last + " site")
     # last day - town
     fjd = np.floor(tsqm_town.jd)
     ind_lastday = fjd == jd_last
