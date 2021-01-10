@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import datetime
-import glob
 import os
 import re
+import sys
 
 import numpy as np
-from astroML.stats import binned_statistic
 from astropy import table
 from astropy.table import Table, Column
-from astropy.time import Time
-from matplotlib import colors
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from scipy import signal
@@ -115,9 +111,11 @@ def count_delta(t, flag, teps=1e-10):
         t_stop = t_pended[flag_diff < 0]
         t_delta = t_stop - t_start
         t_deltamax = np.max(t_delta)
-        return t_start, t_stop, t_delta, t_deltamax
+        t_start_deltamax = t_start[np.argmax(t_delta)]
+        t_stop_deltamax = t_stop[np.argmax(t_delta)]
+        return t_start, t_stop, t_delta, t_deltamax, t_start_deltamax, t_stop_deltamax
     else:
-        return np.nan, np.nan, np.nan, 0
+        return np.nan, np.nan, np.nan, 0, np.nan, np.nan
 
 
 def isdaytime(x, t1):
@@ -263,9 +261,14 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
     # now time
     jd_now = Time.now().jd
 
+    # initialize the stats
+    stats = []
+    from collections import OrderedDict
     print("------- date-time ----- src counts selected")
     for this_jd in np.arange(fjd0, fjd1):
-        # look for evening & morning time
+        this_stat = OrderedDict()
+
+        # find twilight time
         this_ev, this_mn = t1[(t1.jd > this_jd) & (t1.jd < this_jd + 1)]
 
         # the whitelist case [added on 2019-09-29]
@@ -283,6 +286,15 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
             # count time & days
             count_good += 1
             count_total += 1
+            this_stat["jd"] = this_jd
+            this_stat["datetime"] = Time(this_jd, format="jd").isot
+            this_stat["status"] = "whitelist"
+            this_stat["dt_total"] = this_time_total
+            this_stat["dt_clear"] = this_time_total
+            this_stat["dt_clear_max"] = this_time_total
+            this_stat["dt_clear_max_start"] = this_ev.jd
+            this_stat["dt_clear_max_stop"] = this_mn.jd
+            stats.append(this_stat)
             continue
 
         # count sky data in this night
@@ -291,12 +303,17 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
         npts = np.sum(ind_this_night)
 
         if npts > 0:
-            # note: use sqmsrc to selecte SQM source
+            # note: use sqmsrc to select SQM source
             u_sqmsrc, c_sqmsrc = np.unique(sky[ind_this_night]["sqmsrc"].data, return_counts=True)
             o_sqmsrc = u_sqmsrc[np.argmax(c_sqmsrc)]
             ind_this_night = (tsky > this_ev) & (tsky < this_mn) & (sky["sqmsrc"] == o_sqmsrc)
             sub_this_night = np.where(ind_this_night)[0]
             print(Time(this_jd, format="jd").isot, u_sqmsrc, c_sqmsrc, o_sqmsrc)
+
+            # this_stat["sqm_src_count"] = c_sqmsrc
+            this_stat["sqm_src"] = o_sqmsrc
+            # this_stat["sqm_src_list"] = u_sqmsrc
+            this_stat["sqm_npts"] = npts
 
         if 0 < npts < 10:
             # worked, but down
@@ -305,7 +322,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
             time_down += this_time_total
 
             # plot background
-            plt.plot([this_jd, this_jd], [this_ev.jd - this_jd, this_mn.jd - this_jd], 'gray', lw=lw)
+            plt.plot([this_jd, this_jd], [this_ev.jd - this_jd, this_mn.jd - this_jd], 'r', lw=lw)
 
             # set flag
             flag_good[sub_this_night] = -1
@@ -313,6 +330,16 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
             # count time & days
             count_down += 1
             count_total += 1
+
+            this_stat["jd"] = this_jd
+            this_stat["datetime"] = Time(this_jd, format="jd").isot
+            this_stat["status"] = "down"
+            this_stat["dt_total"] = this_time_total
+            this_stat["dt_clear"] = 0.
+            this_stat["dt_clear_max"] = 0.
+            this_stat["dt_clear_max_start"] = np.nan
+            this_stat["dt_clear_max_stop"] = np.nan
+            stats.append(this_stat)
 
         elif 10 <= npts:
             # worked, worked
@@ -329,7 +356,8 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
             y_plot = np.where(ind_clear, x - this_jd, np.nan)
 
             # count time delta
-            t_start, t_stop, t_delta, t_deltamax = count_delta(x, ind_clear * 1)
+            t_start, t_stop, t_delta, t_deltamax, t_start_deltamax, t_stop_deltamax = count_delta(x, ind_clear * 1)
+
             if t_deltamax > dt_filter / 24:
                 # the longest duration is longer than 3 hours
                 # set flag
@@ -374,6 +402,16 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
                 count_bad += 1
                 count_total += 1
 
+            this_stat["jd"] = this_jd
+            this_stat["datetime"] = Time(this_jd, format="jd").isot
+            this_stat["status"] = "obs"
+            this_stat["dt_total"] = this_time_total
+            this_stat["dt_clear"] = np.sum(t_delta)
+            this_stat["dt_clear_max"] = t_deltamax
+            this_stat["dt_clear_max_start"] = t_start_deltamax
+            this_stat["dt_clear_max_stop"] = t_stop_deltamax
+            stats.append(this_stat)
+
         else:
             # no observation
             this_time_total = this_mn.jd - this_ev.jd
@@ -394,6 +432,19 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
                 plt.plot([this_jd, this_jd], [this_ev.jd - this_jd, this_mn.jd - this_jd], 'b', lw=lw)
             else:
                 plt.plot([this_jd, this_jd], [this_ev.jd - this_jd, this_mn.jd - this_jd], 'r', lw=lw)
+
+            this_stat["jd"] = this_jd
+            this_stat["datetime"] = Time(this_jd, format="jd").isot
+            if this_ev.jd > jd_now:
+                this_stat["status"] = "tbd"
+            else:
+                this_stat["status"] = "down"
+            this_stat["dt_total"] = this_time_total
+            this_stat["dt_clear"] = 0
+            this_stat["dt_clear_max"] = 0
+            this_stat["dt_clear_max_start"] = np.nan
+            this_stat["dt_clear_max_stop"] = np.nan
+            stats.append(this_stat)
 
     ax.set_xlabel("Month")
     ax.set_ylabel("Hour(UT)")
@@ -451,7 +502,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
     tsky_flagged = Table([Column(tsky.jd, "jd"),
                           # Column(ind_night, "isnight"),
                           Column(flag_good, "isgood")])
-    return tsky_flagged
+    return tsky_flagged, Table(stats)
 
 
 def plot_wind(ws, wd, ttws, figfp_wind=None):
@@ -654,13 +705,15 @@ def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
 
 if __name__ == "__main__":
 
-    if os.uname()[1] in ["T7610", "MBP16.local", "localhost"]:
+    if os.uname()[1] in ["T7610", "MBP16", "localhost"]:
         # working dir
         dir_work = os.getenv("HOME") + "/PycharmProjects/lhstat"
     else:  # on ali server
         # working dir
         dir_work = "/root/lhstat"
     os.chdir(dir_work)
+    # add current working directory
+    sys.path.append(dir_work+"/lhstat")
 
     # sunmoon data
     datafp_sunmoon = "./data/lhsunmoon.dat"
@@ -677,6 +730,7 @@ if __name__ == "__main__":
 
     # flagged tsky data
     datafp_tsky_flagged_fmt = "./figs/tsky_flagged_{}.csv"
+    datafp_dtstats_fmt = "./figs/dtstats_{}.csv"
 
     # figure paths
     figfp_sky_brightness = "./figs/latest_sky_brightness.png"
@@ -686,14 +740,25 @@ if __name__ == "__main__":
     wjd0 = read_whitelist(datafp_whitelist)
 
     """ read sunmoon data
-    t0: local date
-    t1: astronomical
-    t2: nautical
-    t3: civil
+    t0: local date --> useless
+    t1: astronomical --> sqm stats
+    t2: nautical --> useless
+    t3: civil --> plot wind
     tmoon: moon rise and set
     """
 
-    t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
+    # DEPRECATED: old sunmoon is not enough!
+    # t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
+
+    # NEW: caculate sunrise & sunset
+    print("Calculating twilight time ....")
+    from twilight import generate_sunmoon
+    sunmoon = generate_sunmoon(2017, 2022)
+    from astropy.time import Time
+    t0 = Time(sunmoon["noon"].data)
+    t1 = Time(np.array(sunmoon["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
+    t2 = Time(np.array(sunmoon["sunrise_nauti", "sunset_nauti"].to_pandas(), dtype=str), format="isot")
+    t3 = Time(np.array(sunmoon["sunrise_civil", "sunset_civil"].to_pandas(), dtype=str), format="isot")
 
     """ sky stats"""
     # lenghu
@@ -720,10 +785,44 @@ if __name__ == "__main__":
     #     f.write(" last entry: " + tsky[-1].isot + "\n")
 
     plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town, sqm_town)
-    for year in [2018, 2019, 2020]:
+
+    tsky_flagged_all = []
+    dtstats_all = []
+    year_list = [2018, 2019, 2020, 2021]
+    for year in year_list:
         print("processing sky goodness of year ", year)
-        tsky_flagged = plot_sky_goodness(tsky, sky, year, figfp_sky_goodness_fmt, wjd0=wjd0, dt_filter=0)
+        tsky_flagged, dtstats = plot_sky_goodness(tsky, sky, year, figfp_sky_goodness_fmt, wjd0=wjd0, dt_filter=0)
+        tsky_flagged_all.append(tsky_flagged)
+        dtstats_all.append(dtstats)
+        dtstats.write(datafp_dtstats_fmt.format(year), overwrite=True)
         tsky_flagged.write(datafp_tsky_flagged_fmt.format(year), overwrite=True)
+
+    """ print stats info """
+    info_stats = []
+    for i_year, year in enumerate(year_list):
+        dtstats = dtstats_all[i_year]
+        from collections import OrderedDict
+        ind_obs = (dtstats["status"] == "obs") | (dtstats["status"] == "whitelist")
+        info_stats.append(OrderedDict(
+            year=year,
+            nobs=np.sum(ind_obs),
+            dtclear=np.nansum(dtstats["dt_clear"][ind_obs])*24,
+            frac98=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.98)),
+            frac50=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.5)),
+            frac20=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.2)),
+            clear6h=np.sum(ind_obs & (dtstats["dt_clear"] > 6 / 24.)),
+            clear4h=np.sum(ind_obs & (dtstats["dt_clear"] > 4 / 24.)),
+            clear2h=np.sum(ind_obs & (dtstats["dt_clear"] > 2 / 24.)),
+        ))
+    info_stats = Table(info_stats)
+    info_stats.pprint()
+    info_stats.write("./figs/info_stats.csv")
+
+    """ save dtstats & tsky_flagged """
+    table.vstack(dtstats_all).write("./figs/dtstats_all.fits", overwrite=True)
+    table.vstack(dtstats_all).write("./figs/dtstats_all.csv", overwrite=True)
+    table.vstack(tsky_flagged_all).write("./figs/tsky_flagged_all.fits", overwrite=True)
+    table.vstack(tsky_flagged_all).write("./figs/tsky_flagged_all.csv", overwrite=True)
 
     """ wind stats """
     # wind data
@@ -739,3 +838,6 @@ if __name__ == "__main__":
 
     """ close all figures """
     plt.close("all")
+
+    """ dtstats info """
+    dtstats_all = table.vstack(dtstats_all)
