@@ -356,7 +356,7 @@ if __name__ == "__main__":
 
     year = 2019
 
-    if os.uname()[1] in ["T7610", "MBP16.local"]:
+    if os.uname()[1] in ["T7610", "MBP16"]:
         # working dir
         dir_work = os.getenv("HOME") + "/PycharmProjects/lhstat"
     else:  # on ali server
