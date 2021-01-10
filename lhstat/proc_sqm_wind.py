@@ -7,6 +7,7 @@ import sys
 import numpy as np
 from astropy import table
 from astropy.table import Table, Column
+from astropy.time import Time
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from scipy import signal
