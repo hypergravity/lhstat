@@ -75,7 +75,7 @@ def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt", sqmsrc=0):
     sky = Table.read(lines_sky[1:], format="ascii.basic")
 
     # add sqm src info
-    sky.add_column(table.Column(np.ones(len(sky), int) * i, "sqmsrc"))
+    sky.add_column(table.Column(np.ones(len(sky), int) * sqmsrc, "sqmsrc"))
 
     # add isot/time/jd and sort
     isot = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in range(len(sky))]
@@ -778,7 +778,7 @@ if __name__ == "__main__":
     tsqm_town = Time(sqm_town["isot"].data)
     indsort = np.argsort(tsqm_town.jd)
     sqm_town = sqm_town[indsort]
-    sqm_town = sqm_town[indsort]
+    # sqm_town = sqm_town[indsort]
 
     # log info
     # with open("./{}.log".format(datetime.datetime.now().isoformat()), "w+") as f:
@@ -808,6 +808,8 @@ if __name__ == "__main__":
             year=year,
             nobs=np.sum(ind_obs),
             dtclear=np.nansum(dtstats["dt_clear"][ind_obs])*24,
+            dttotal=np.nansum(dtstats["dt_total"][ind_obs])*24,
+            fracclear=np.nansum(dtstats["dt_clear"][ind_obs]) / np.nansum(dtstats["dt_total"][ind_obs]),
             frac98=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.98)),
             frac50=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.5)),
             frac20=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.2)),
