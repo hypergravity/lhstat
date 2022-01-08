@@ -81,11 +81,7 @@ def read_sky(fp_sky="/home/cham/lh/sqm/SQMReadings_20181205.txt", sqmsrc=0):
     isot = [(sky["YMD"][i] + "T" + sky["HMS"][i]).replace("/", "-") for i in range(len(sky))]
     # tsky = Time(isot)
     sky.add_column(table.Column(isot, "isot"))
-    # sky.add_column(table.Column(tsky, "tsky"))
-    # sky.add_column(table.Column(tsky.jd, "jd"))
-    # sky.sort("jd")
-
-    return sky#, tsky
+    return sky
 
 
 def count_delta(t, flag, teps=1e-10):
@@ -716,7 +712,7 @@ if __name__ == "__main__":
     # add current working directory
     sys.path.append(dir_work+"/lhstat")
 
-    # sunmoon data
+    # sunmoon data --> deprecated
     datafp_sunmoon = "./data/lhsunmoon.dat"
     # sky brightness data
     datafp_skys = ["./latest_data/SQMReadings_20180923.txt",
@@ -789,7 +785,7 @@ if __name__ == "__main__":
 
     tsky_flagged_all = []
     dtstats_all = []
-    year_list = [2018, 2019, 2020, 2021]
+    year_list = [2018, 2019, 2020, 2021, 2022]
     for year in year_list:
         print("processing sky goodness of year ", year)
         tsky_flagged, dtstats = plot_sky_goodness(tsky, sky, year, figfp_sky_goodness_fmt, wjd0=wjd0, dt_filter=0)
