@@ -750,7 +750,7 @@ if __name__ == "__main__":
     # NEW: caculate sunrise & sunset
     print("Calculating twilight time ....")
     from twilight import generate_sunmoon
-    sunmoon = generate_sunmoon(2017, 2022)
+    sunmoon = generate_sunmoon(2017, 2023)
     from astropy.time import Time
     t0 = Time(sunmoon["noon"].data)
     t1 = Time(np.array(sunmoon["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
