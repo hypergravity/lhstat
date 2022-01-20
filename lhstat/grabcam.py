@@ -91,7 +91,19 @@ if __name__ == "__main__":
         datafp_sunmoon = "./data/lhsunmoon.dat"
 
     os.chdir(dir_work)
-    t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
+    # t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
+
+    # NEW: caculate sunrise & sunset
+    print("Calculating twilight time ....")
+    from twilight import generate_sunmoon
+
+    sunmoon = generate_sunmoon(2017, 2023)
+    from astropy.time import Time
+
+    t0 = Time(sunmoon["noon"].data)
+    t1 = Time(np.array(sunmoon["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
+    t2 = Time(np.array(sunmoon["sunrise_nauti", "sunset_nauti"].to_pandas(), dtype=str), format="isot")
+    t3 = Time(np.array(sunmoon["sunrise_civil", "sunset_civil"].to_pandas(), dtype=str), format="isot")
 
     # make directory
     dir_temp = "./tempcam"
