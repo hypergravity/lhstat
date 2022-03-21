@@ -200,6 +200,7 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
 
 def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png", wjd0=[],
                       dt_filter=0, fjd_dates=None):
+
     figfp_sky_goodness = figfp_sky_goodness_fmt.format(year)
 
     # start & end of the year, say 2019
@@ -216,7 +217,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
         fjd1 = np.floor(Time("{}T12:00:00.000".format(fjd_dates[1]), format="isot").jd)
 
     # day / night in tsky
-    ind_day = isdaytime(tsky_, t1)
+    ind_day = isdaytime(tsky_, t1_site)
     ind_night = np.logical_not(ind_day)
 
     # only need night sky data
@@ -266,7 +267,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
         this_stat = OrderedDict()
 
         # find twilight time
-        this_ev, this_mn = t1[(t1.jd > this_jd) & (t1.jd < this_jd + 1)]
+        this_ev, this_mn = t1_site[(t1_site.jd > this_jd) & (t1_site.jd < this_jd + 1)]
 
         # the whitelist case [added on 2019-09-29]
         if this_jd in wjd0:
@@ -503,7 +504,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
 
 
 def plot_wind(ws, wd, ttws, figfp_wind=None):
-    ind_day = isdaytime(ttws, t3)
+    ind_day = isdaytime(ttws, t3_site)
     # last day
     fjd = np.floor(ttws.jd)
     if np.mod(ttws.jd[-1], 1) > 0.5:
@@ -595,7 +596,7 @@ def plot_wind(ws, wd, ttws, figfp_wind=None):
 def plot_wind_sub(ws, wd, ttws, nwdbins=12, figfp_wind=None):
     _figsize = (8, 7)
 
-    ind_day = isdaytime(ttws, t3)
+    ind_day = isdaytime(ttws, t3_site)
     ind_night = ~ind_day
     # last day
     fjd = np.floor(ttws.jd)
@@ -715,10 +716,10 @@ if __name__ == "__main__":
     # sunmoon data --> deprecated
     datafp_sunmoon = "./data/lhsunmoon.dat"
     # sky brightness data
-    datafp_skys = ["./latest_data/SQMReadings_20180923.txt",
-                   "./latest_data/SQMReadings.txt",
-                   "./latest_data/sqm_ext.txt",
-                   ]
+    datafp_sqm = ["./latest_data/SQMReadings_20180923.txt",
+                  "./latest_data/SQMReadings.txt",
+                  "./latest_data/sqm_ext.txt",
+                  ]
     datafp_sqm_town = "./latest_data/SQMReadings_lhtown.txt"
     # seeing data
     datafp_seeing = "./latest_data/Seeing_Data.txt"
@@ -726,12 +727,15 @@ if __name__ == "__main__":
     datafp_whitelist = "./latest_data/whitelist"
 
     # flagged tsky data
-    datafp_tsky_flagged_fmt = "./figs/tsky_flagged_{}.csv"
-    datafp_dtstats_fmt = "./figs/dtstats_{}.csv"
+    datafp_tsky_flagged_site_fmt = "./figs/tsky_flagged_site_{}.csv"
+    datafp_dtstats_site_fmt = "./figs/dtstats_site_{}.csv"
+    datafp_tsky_flagged_town_fmt = "./figs/tsky_flagged_town_{}.csv"
+    datafp_dtstats_town_fmt = "./figs/dtstats_town_{}.csv"
 
     # figure paths
     figfp_sky_brightness = "./figs/latest_sky_brightness.png"
-    figfp_sky_goodness_fmt = "./figs/latest_sky_goodness_{}.png"
+    figfp_sky_goodness_site_fmt = "./figs/latest_sky_goodness_site_{}.png"
+    figfp_sky_goodness_town_fmt = "./figs/latest_sky_goodness_town_{}.png"
 
     """ read white list """
     wjd0 = read_whitelist(datafp_whitelist)
@@ -747,28 +751,34 @@ if __name__ == "__main__":
     # DEPRECATED: old sunmoon is not enough!
     # t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
 
-    # NEW: caculate sunrise & sunset
+    # NEW: caculate sunrise & sunset for site & town
     print("Calculating twilight time ....")
-    from twilight import generate_sunmoon
-    sunmoon = generate_sunmoon(2017, 2023)
+    from twilight import generate_sunmoon, LOC_LH_TOWN, LOC_LH_SITE
+    sunmoon_site = generate_sunmoon(2017, 2023, **LOC_LH_SITE)
+    sunmoon_town = generate_sunmoon(2017, 2023, **LOC_LH_TOWN)
     from astropy.time import Time
-    t0 = Time(sunmoon["noon"].data)
-    t1 = Time(np.array(sunmoon["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
-    t2 = Time(np.array(sunmoon["sunrise_nauti", "sunset_nauti"].to_pandas(), dtype=str), format="isot")
-    t3 = Time(np.array(sunmoon["sunrise_civil", "sunset_civil"].to_pandas(), dtype=str), format="isot")
+    t0_site = Time(sunmoon_site["noon"].data)
+    t1_site = Time(np.array(sunmoon_site["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
+    t2_site = Time(np.array(sunmoon_site["sunrise_nauti", "sunset_nauti"].to_pandas(), dtype=str), format="isot")
+    t3_site = Time(np.array(sunmoon_site["sunrise_civil", "sunset_civil"].to_pandas(), dtype=str), format="isot")
+    t0_town = Time(sunmoon_town["noon"].data)
+    t1_town = Time(np.array(sunmoon_town["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
+    t2_town = Time(np.array(sunmoon_town["sunrise_nauti", "sunset_nauti"].to_pandas(), dtype=str), format="isot")
+    t3_town = Time(np.array(sunmoon_town["sunrise_civil", "sunset_civil"].to_pandas(), dtype=str), format="isot")
 
     """ sky stats"""
     # lenghu
     sky_list = []
-    for i, _ in enumerate(datafp_skys):
+    for i, _ in enumerate(datafp_sqm):
         print("reading sqm {}".format(_))
         this_sky = read_sky(_, sqmsrc=i)
         sky_list.append(this_sky)
-    sky = table.vstack(sky_list)
-    tsky = Time(sky["isot"].data)
-    indsort = np.argsort(tsky.jd)
-    sky = sky[indsort]
-    tsky = tsky[indsort]
+    # site
+    sqm_site = table.vstack(sky_list)
+    tsqm_site = Time(sqm_site["isot"].data)
+    indsort = np.argsort(tsqm_site.jd)
+    sqm_site = sqm_site[indsort]
+    tsqm_site = tsqm_site[indsort]
     # town
     sqm_town = read_sky(datafp_sqm_town)
     tsqm_town = Time(sqm_town["isot"].data)
@@ -781,47 +791,64 @@ if __name__ == "__main__":
     #     f.write(" now: " + datetime.datetime.now().isoformat() + "\n")
     #     f.write(" last entry: " + tsky[-1].isot + "\n")
 
-    plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town, sqm_town)
+    plot_sky_brightness(tsqm_site, sqm_site, figfp_sky_brightness, tsqm_town, sqm_town)
 
-    tsky_flagged_all = []
-    dtstats_all = []
+    # sqm goodness (site)
+    print(" === FOR SITE ===")
+    tsky_flagged_site = []
+    dtstats_site = []
     year_list = [2018, 2019, 2020, 2021, 2022]
     for year in year_list:
         print("processing sky goodness of year ", year)
-        tsky_flagged, dtstats = plot_sky_goodness(tsky, sky, year, figfp_sky_goodness_fmt, wjd0=wjd0, dt_filter=0)
-        tsky_flagged_all.append(tsky_flagged)
-        dtstats_all.append(dtstats)
-        dtstats.write(datafp_dtstats_fmt.format(year), overwrite=True)
-        tsky_flagged.write(datafp_tsky_flagged_fmt.format(year), overwrite=True)
+        this_tsky_flagged, this_dtstats = plot_sky_goodness(tsqm_site, sqm_site, year, figfp_sky_goodness_site_fmt,
+                                                            wjd0=wjd0, dt_filter=0)
+        tsky_flagged_site.append(this_tsky_flagged)
+        dtstats_site.append(this_dtstats)
+        this_dtstats.write(datafp_dtstats_site_fmt.format(year), overwrite=True)
+        this_tsky_flagged.write(datafp_tsky_flagged_site_fmt.format(year), overwrite=True)
+
+    # sqm goodness (town)
+    print(" === FOR TOWN ===")
+    tsky_flagged_town = []
+    dtstats_town = []
+    year_list = [2018, 2019, 2020, 2021, 2022]
+    for year in year_list:
+        print("processing sky goodness of year ", year)
+        this_tsky_flagged, this_dtstats = plot_sky_goodness(tsqm_town, sqm_town, year, figfp_sky_goodness_town_fmt,
+                                                            wjd0=wjd0, dt_filter=0)
+        tsky_flagged_town.append(this_tsky_flagged)
+        dtstats_town.append(this_dtstats)
+        this_dtstats.write(datafp_dtstats_town_fmt.format(year), overwrite=True)
+        this_tsky_flagged.write(datafp_tsky_flagged_town_fmt.format(year), overwrite=True)
 
     """ print stats info """
     info_stats = []
     for i_year, year in enumerate(year_list):
-        dtstats = dtstats_all[i_year]
+        this_dtstats = dtstats_site[i_year]
         from collections import OrderedDict
-        ind_obs = (dtstats["status"] == "obs") | (dtstats["status"] == "whitelist")
+        ind_obs = (this_dtstats["status"] == "obs") | (this_dtstats["status"] == "whitelist")
         info_stats.append(OrderedDict(
             year=year,
             nobs=np.sum(ind_obs),
-            dtclear=np.nansum(dtstats["dt_clear"][ind_obs])*24,
-            dttotal=np.nansum(dtstats["dt_total"][ind_obs])*24,
-            fracclear=np.nansum(dtstats["dt_clear"][ind_obs]) / np.nansum(dtstats["dt_total"][ind_obs]),
-            frac98=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.98)),
-            frac50=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.5)),
-            frac20=np.sum(ind_obs & (dtstats["dt_clear"] / dtstats["dt_total"] > 0.2)),
-            clear6h=np.sum(ind_obs & (dtstats["dt_clear"] > 6 / 24.)),
-            clear4h=np.sum(ind_obs & (dtstats["dt_clear"] > 4 / 24.)),
-            clear2h=np.sum(ind_obs & (dtstats["dt_clear"] > 2 / 24.)),
+            dtclear=np.nansum(this_dtstats["dt_clear"][ind_obs]) * 24,
+            dttotal=np.nansum(this_dtstats["dt_total"][ind_obs]) * 24,
+            fracclear=np.nansum(this_dtstats["dt_clear"][ind_obs]) / np.nansum(this_dtstats["dt_total"][ind_obs]),
+            frac98=np.sum(ind_obs & (this_dtstats["dt_clear"] / this_dtstats["dt_total"] > 0.98)),
+            frac50=np.sum(ind_obs & (this_dtstats["dt_clear"] / this_dtstats["dt_total"] > 0.5)),
+            frac20=np.sum(ind_obs & (this_dtstats["dt_clear"] / this_dtstats["dt_total"] > 0.2)),
+            clear6h=np.sum(ind_obs & (this_dtstats["dt_clear"] > 6 / 24.)),
+            clear4h=np.sum(ind_obs & (this_dtstats["dt_clear"] > 4 / 24.)),
+            clear2h=np.sum(ind_obs & (this_dtstats["dt_clear"] > 2 / 24.)),
         ))
     info_stats = Table(info_stats)
     info_stats.pprint()
     info_stats.write("./figs/info_stats.csv")
 
     """ save dtstats & tsky_flagged """
-    table.vstack(dtstats_all).write("./figs/dtstats_all.fits", overwrite=True)
-    table.vstack(dtstats_all).write("./figs/dtstats_all.csv", overwrite=True)
-    table.vstack(tsky_flagged_all).write("./figs/tsky_flagged_all.fits", overwrite=True)
-    table.vstack(tsky_flagged_all).write("./figs/tsky_flagged_all.csv", overwrite=True)
+    table.vstack(dtstats_site).write("./figs/dtstats_all.fits", overwrite=True)
+    table.vstack(dtstats_site).write("./figs/dtstats_all.csv", overwrite=True)
+    table.vstack(tsky_flagged_site).write("./figs/tsky_flagged_all.fits", overwrite=True)
+    table.vstack(tsky_flagged_site).write("./figs/tsky_flagged_all.csv", overwrite=True)
 
     """ wind stats """
     # wind data
@@ -839,4 +866,4 @@ if __name__ == "__main__":
     plt.close("all")
 
     """ dtstats info """
-    dtstats_all = table.vstack(dtstats_all)
+    dtstats_site = table.vstack(dtstats_site)
