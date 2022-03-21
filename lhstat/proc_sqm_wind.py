@@ -198,8 +198,8 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     return
 
 
-def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png", wjd0=[],
-                      dt_filter=0, fjd_dates=None):
+def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png",
+                      wjd0=[], dt_filter=0, fjd_dates=None):
 
     figfp_sky_goodness = figfp_sky_goodness_fmt.format(year)
 
@@ -217,7 +217,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
         fjd1 = np.floor(Time("{}T12:00:00.000".format(fjd_dates[1]), format="isot").jd)
 
     # day / night in tsky
-    ind_day = isdaytime(tsky_, t1_site)
+    ind_day = isdaytime(tsky_, t1)
     ind_night = np.logical_not(ind_day)
 
     # only need night sky data
@@ -267,7 +267,7 @@ def plot_sky_goodness(tsky_, sky_, year=2020, figfp_sky_goodness_fmt="./figs/lat
         this_stat = OrderedDict()
 
         # find twilight time
-        this_ev, this_mn = t1_site[(t1_site.jd > this_jd) & (t1_site.jd < this_jd + 1)]
+        this_ev, this_mn = t1[(t1.jd > this_jd) & (t1.jd < this_jd + 1)]
 
         # the whitelist case [added on 2019-09-29]
         if this_jd in wjd0:
@@ -793,33 +793,36 @@ if __name__ == "__main__":
 
     plot_sky_brightness(tsqm_site, sqm_site, figfp_sky_brightness, tsqm_town, sqm_town)
 
-    # sqm goodness (site)
-    print(" === FOR SITE ===")
-    tsky_flagged_site = []
-    dtstats_site = []
-    year_list = [2018, 2019, 2020, 2021, 2022]
-    for year in year_list:
-        print("processing sky goodness of year ", year)
-        this_tsky_flagged, this_dtstats = plot_sky_goodness(tsqm_site, sqm_site, year, figfp_sky_goodness_site_fmt,
-                                                            wjd0=wjd0, dt_filter=0)
-        tsky_flagged_site.append(this_tsky_flagged)
-        dtstats_site.append(this_dtstats)
-        this_dtstats.write(datafp_dtstats_site_fmt.format(year), overwrite=True)
-        this_tsky_flagged.write(datafp_tsky_flagged_site_fmt.format(year), overwrite=True)
-
     # sqm goodness (town)
-    print(" === FOR TOWN ===")
+    print(" === SQM FOR TOWN ===")
     tsky_flagged_town = []
     dtstats_town = []
     year_list = [2018, 2019, 2020, 2021, 2022]
     for year in year_list:
         print("processing sky goodness of year ", year)
-        this_tsky_flagged, this_dtstats = plot_sky_goodness(tsqm_town, sqm_town, year, figfp_sky_goodness_town_fmt,
-                                                            wjd0=wjd0, dt_filter=0)
-        tsky_flagged_town.append(this_tsky_flagged)
-        dtstats_town.append(this_dtstats)
-        this_dtstats.write(datafp_dtstats_town_fmt.format(year), overwrite=True)
-        this_tsky_flagged.write(datafp_tsky_flagged_town_fmt.format(year), overwrite=True)
+        try:
+            this_tsky_flagged, this_dtstats = plot_sky_goodness(
+                tsqm_town, sqm_town, t1_town, year, figfp_sky_goodness_town_fmt, wjd0=wjd0, dt_filter=0)
+            tsky_flagged_town.append(this_tsky_flagged)
+            dtstats_town.append(this_dtstats)
+            this_dtstats.write(datafp_dtstats_town_fmt.format(year), overwrite=True)
+            this_tsky_flagged.write(datafp_tsky_flagged_town_fmt.format(year), overwrite=True)
+        except Exception as _e:
+            pass
+
+    # sqm goodness (site)
+    print(" === SQM FOR SITE ===")
+    tsky_flagged_site = []
+    dtstats_site = []
+    year_list = [2018, 2019, 2020, 2021, 2022]
+    for year in year_list:
+        print("processing sky goodness of year ", year)
+        this_tsky_flagged, this_dtstats = plot_sky_goodness(
+            tsqm_site, sqm_site, t1_site, year, figfp_sky_goodness_site_fmt, wjd0=wjd0, dt_filter=0)
+        tsky_flagged_site.append(this_tsky_flagged)
+        dtstats_site.append(this_dtstats)
+        this_dtstats.write(datafp_dtstats_site_fmt.format(year), overwrite=True)
+        this_tsky_flagged.write(datafp_tsky_flagged_site_fmt.format(year), overwrite=True)
 
     """ print stats info """
     info_stats = []
