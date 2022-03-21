@@ -19,8 +19,8 @@ from astropy import units
 from astropy.table import Table
 from collections import OrderedDict
 
-LOC_LH_SITE = {"lon": 93.89584177, "lat": 38.60655009, "evev": 4219}
-LOC_LH_TOWN = {"lon": 93.33610493, "lat": 38.73604366, "evev": 2778}
+LOC_LH_SITE = {"lon": 93.89584177, "lat": 38.60655009, "elev": 4219}
+LOC_LH_TOWN = {"lon": 93.33610493, "lat": 38.73604366, "elev": 2778}
 
 
 def eval_twilight(date="2020-03-10 04:00:00", lon=120, lat=30, elev=0., gmt=8, kind="astronomical"):
