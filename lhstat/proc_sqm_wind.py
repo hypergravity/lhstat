@@ -756,8 +756,8 @@ if __name__ == "__main__":
     # t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
 
     # NEW: caculate sunrise & sunset for site & town
-    print("Calculating twilight time ....")
     current_year = datetime.datetime.now().year
+    print(f"Calculating twilight time from 2017 to {current_year}....")
     sunmoon_site = generate_sunmoon(2017, current_year, **LOC_LH_SITE)
     sunmoon_town = generate_sunmoon(2017, current_year, **LOC_LH_TOWN)
 
