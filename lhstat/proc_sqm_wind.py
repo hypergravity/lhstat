@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import os
 import re
 import sys
@@ -12,6 +13,8 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from scipy import signal
 from scipy.stats import binned_statistic_2d
+
+from twilight import generate_sunmoon, LOC_LH_TOWN, LOC_LH_SITE
 
 rcParams.update({"font.size": 15})
 
@@ -167,8 +170,11 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     # last day - town
     fjd = np.floor(tsqm_town.jd)
     ind_lastday = fjd == jd_last
-    l2_town = ax.plot(np.mod(tsqm_town[ind_lastday].jd, 1), sqm_town["MPSAS"][ind_lastday], '-', color="b", alpha=0.8, ms=0.2,
-                      label=date_last + " town")
+    l2_town = ax.plot(
+        np.mod(tsqm_town[ind_lastday].jd, 1), sqm_town["MPSAS"][ind_lastday], '-', color="b", alpha=0.8,
+        ms=0.2,
+        label=date_last + " town"
+    )
 
     ax.legend(loc="upper center", framealpha=0.1)
 
@@ -200,7 +206,6 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
 
 def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png",
                       wjd0=[], dt_filter=0, fjd_dates=None):
-
     figfp_sky_goodness = figfp_sky_goodness_fmt.format(year)
 
     # start & end of the year, say 2019
@@ -457,7 +462,7 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
     # xtick_times = Time(["{:04d}-{:02d}-01T01:01:00.000".format(year, _) for _ in np.arange(1, 13)], format="isot")
 
     monthticks = Time(np.arange(fjd0, fjd1 + 1), format="jd")
-    ind_01 = np.array([_[8:10]=="01" for _ in monthticks.isot])
+    ind_01 = np.array([_[8:10] == "01" for _ in monthticks.isot])
 
     # xtick_fjd = np.floor(xtick_times.jd)
     xtick_fjd = monthticks[ind_01]
@@ -711,7 +716,7 @@ if __name__ == "__main__":
         dir_work = "/root/lhstat"
     os.chdir(dir_work)
     # add current working directory
-    sys.path.append(dir_work+"/lhstat")
+    sys.path.append(dir_work + "/lhstat")
 
     # sunmoon data --> deprecated
     datafp_sunmoon = "./data/lhsunmoon.dat"
@@ -753,10 +758,10 @@ if __name__ == "__main__":
 
     # NEW: caculate sunrise & sunset for site & town
     print("Calculating twilight time ....")
-    from twilight import generate_sunmoon, LOC_LH_TOWN, LOC_LH_SITE
+
     sunmoon_site = generate_sunmoon(2017, 2023, **LOC_LH_SITE)
     sunmoon_town = generate_sunmoon(2017, 2023, **LOC_LH_TOWN)
-    from astropy.time import Time
+
     t0_site = Time(sunmoon_site["noon"].data)
     t1_site = Time(np.array(sunmoon_site["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
     t2_site = Time(np.array(sunmoon_site["sunrise_nauti", "sunset_nauti"].to_pandas(), dtype=str), format="isot")
@@ -797,7 +802,7 @@ if __name__ == "__main__":
     print(" === SQM FOR TOWN ===")
     tsky_flagged_town = []
     dtstats_town = []
-    year_list = [2018, 2019, 2020, 2021, 2022]
+    year_list = list(range(2018, datetime.datetime.now().year + 1))
     for year in year_list:
         print("processing sky goodness of year ", year)
         try:
@@ -829,6 +834,7 @@ if __name__ == "__main__":
     for i_year, year in enumerate(year_list):
         this_dtstats = dtstats_site[i_year]
         from collections import OrderedDict
+
         ind_obs = (this_dtstats["status"] == "obs") | (this_dtstats["status"] == "whitelist")
         info_stats.append(OrderedDict(
             year=year,
