@@ -66,7 +66,7 @@ def generate_sunmoon(year0=2017, year1=2022, lon=93.8961, lat=38.6068, elev=4200
     assert year0 <= year1
     td = TimeDelta(gmt*units.h)
     jd0 = (Time("{}-01-01T12:00:00".format(year0), ) - td).jd
-    jd1 = (Time("{}-12-31T12:00:00".format(year1), ) - td).jd
+    jd1 = (Time("{}-01-01T12:00:00".format(year1 + 1), ) - td).jd
     jd_array = np.arange(jd0, jd1+1, 1, dtype=float)
     t_array = Time(jd_array, format="jd")
     t_local_array = t_array + td

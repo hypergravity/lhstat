@@ -757,9 +757,9 @@ if __name__ == "__main__":
 
     # NEW: caculate sunrise & sunset for site & town
     print("Calculating twilight time ....")
-
-    sunmoon_site = generate_sunmoon(2017, 2023, **LOC_LH_SITE)
-    sunmoon_town = generate_sunmoon(2017, 2023, **LOC_LH_TOWN)
+    current_year = datetime.datetime.now().year
+    sunmoon_site = generate_sunmoon(2017, current_year, **LOC_LH_SITE)
+    sunmoon_town = generate_sunmoon(2017, current_year, **LOC_LH_TOWN)
 
     t0_site = Time(sunmoon_site["noon"].data)
     t1_site = Time(np.array(sunmoon_site["sunrise_astro", "sunset_astro"].to_pandas(), dtype=str), format="isot")
@@ -798,7 +798,7 @@ if __name__ == "__main__":
     plot_sky_brightness(tsqm_site, sqm_site, figfp_sky_brightness, tsqm_town, sqm_town)
 
     # year list
-    year_list = list(range(2018, datetime.datetime.now().year + 1))
+    year_list = list(range(2018, current_year + 1))
     # sqm goodness (town)
     print(" === SQM FOR TOWN ===")
     tsky_flagged_town = []
