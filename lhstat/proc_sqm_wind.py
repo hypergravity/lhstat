@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import os
 import re
 import sys
+from collections import OrderedDict
 
 import numpy as np
 from astropy import table
@@ -798,11 +797,12 @@ if __name__ == "__main__":
 
     plot_sky_brightness(tsqm_site, sqm_site, figfp_sky_brightness, tsqm_town, sqm_town)
 
+    # year list
+    year_list = list(range(2018, datetime.datetime.now().year + 1))
     # sqm goodness (town)
     print(" === SQM FOR TOWN ===")
     tsky_flagged_town = []
     dtstats_town = []
-    year_list = list(range(2018, datetime.datetime.now().year + 1))
     for year in year_list:
         print("processing sky goodness of year ", year)
         try:
@@ -819,7 +819,6 @@ if __name__ == "__main__":
     print(" === SQM FOR SITE ===")
     tsky_flagged_site = []
     dtstats_site = []
-    year_list = [2018, 2019, 2020, 2021, 2022]
     for year in year_list:
         print("processing sky goodness of year ", year)
         this_tsky_flagged, this_dtstats = plot_sky_goodness(
@@ -833,7 +832,6 @@ if __name__ == "__main__":
     info_stats = []
     for i_year, year in enumerate(year_list):
         this_dtstats = dtstats_site[i_year]
-        from collections import OrderedDict
 
         ind_obs = (this_dtstats["status"] == "obs") | (this_dtstats["status"] == "whitelist")
         info_stats.append(OrderedDict(
