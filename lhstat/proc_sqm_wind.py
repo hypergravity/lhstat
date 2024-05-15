@@ -469,7 +469,7 @@ def plot_sky_goodness(
             this_stat["dt_clear_max_stop"] = np.nan
             stats.append(this_stat)
 
-    print(stats)
+    stats = Table(stats)
     ax.set_xlabel("Month")
     ax.set_ylabel("Hour(UT)")
 
@@ -524,9 +524,9 @@ def plot_sky_goodness(
     )
     ax.annotate(
         "N2/N4/N6/bad/down/tbd: {}/{}/{}/{}/{}/{}".format(
-            this_dtstats["is_gt2h"].sum(),
-            this_dtstats["is_gt4h"].sum(),
-            this_dtstats["is_gt6h"].sum(),
+            stats["is_gt2h"].sum(),
+            stats["is_gt4h"].sum(),
+            stats["is_gt6h"].sum(),
             count_bad, count_down, count_tbd),
         xy=(0.5, 0.17), xycoords="axes fraction", fontsize=afontsize-2,
         ha="center", va="center",
@@ -554,7 +554,7 @@ def plot_sky_goodness(
     tsky_flagged = Table([Column(tsky.jd, "jd"),
                           # Column(ind_night, "isnight"),
                           Column(flag_good, "isgood")])
-    return tsky_flagged, Table(stats)
+    return tsky_flagged, stats
 
 
 def plot_wind(ws, wd, ttws, figfp_wind=None):
