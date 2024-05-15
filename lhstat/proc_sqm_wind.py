@@ -165,14 +165,14 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     ind_lastday = fjd == jd_last
     date_last = Time(jd_last, format="jd").isot[:10]
     l2 = ax.plot(np.mod(tsky[ind_lastday].jd, 1), sky["MPSAS"][ind_lastday], '-', color="r", alpha=0.8, ms=0.2,
-                 label=date_last + " site")
+                 label=date_last + " point C")
     # last day - town
     fjd = np.floor(tsqm_town.jd)
     ind_lastday = fjd == jd_last
     l2_town = ax.plot(
         np.mod(tsqm_town[ind_lastday].jd, 1), sqm_town["MPSAS"][ind_lastday], '-', color="b", alpha=0.8,
         ms=0.2,
-        label=date_last + " town"
+        label=date_last + " point A"
     )
 
     ax.legend(loc="upper center", framealpha=0.1)
