@@ -502,8 +502,8 @@ def plot_sky_goodness(
             stats.append(this_stat)
 
     stats = Table(stats)
-    if year == 2024:
-        stats.show_in_browser()
+    # if year == 2024:
+    #     stats.show_in_browser()
     ax.set_xlabel("Month")
     ax.set_ylabel("Hour(UT)")
 
@@ -560,11 +560,10 @@ def plot_sky_goodness(
         ha="center", va="center",
     )
     ax.annotate(
-        "N2/N4/N6/bad/down/tbd: {}/{}/{}/{}/{}/{}".format(
-
-            stats["is_gt2h"].sum() - stats["is_gt4h"].sum(),
-            stats["is_gt4h"].sum() - stats["is_gt6h"].sum(),
+        "N6/N4/N2/bad/down/tbd: {}/{}/{}/{}/{}/{}".format(
             stats["is_gt6h"].sum(),
+            stats["is_gt4h"].sum() - stats["is_gt6h"].sum(),
+            stats["is_gt2h"].sum() - stats["is_gt4h"].sum(),
             stats["is_bad"].sum(),
             stats["is_down"].sum(),
             stats["is_tbd"].sum(),
@@ -811,9 +810,10 @@ if __name__ == "__main__":
 
     # sunmoon data --> deprecated
     datafp_sunmoon = "./data/lhsunmoon.dat"
-    # sky brightness data
+    # SQM data
     datafp_sqm = [
         "./latest_data/SQMReadings_20180923.txt",
+        "./latest_data/SQMReadings_20231231.txt",
         "./latest_data/SQMReadings.txt",
         "./latest_data/sqm_ext.txt",
     ]
