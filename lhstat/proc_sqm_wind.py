@@ -375,7 +375,7 @@ def plot_sky_goodness(
             # count time delta
             t_start, t_stop, t_delta, t_deltamax, t_start_deltamax, t_stop_deltamax = count_delta(x, ind_clear * 1)
 
-            if t_deltamax > dt_filter / 24:
+            if t_deltamax >= dt_filter / 24:
                 # the longest duration is longer than 3 hours
                 # set flag
                 flag_good[sub_this_night[ind_clear]] = 1
@@ -467,6 +467,12 @@ def plot_sky_goodness(
             this_stat["dt_clear_max"] = 0
             this_stat["dt_clear_max_start"] = np.nan
             this_stat["dt_clear_max_stop"] = np.nan
+
+            # new stats
+            this_stat["is_gt2h"] = False
+            this_stat["is_gt4h"] = False
+            this_stat["is_gt6h"] = False
+
             stats.append(this_stat)
 
     stats = Table(stats)
@@ -525,8 +531,8 @@ def plot_sky_goodness(
     ax.annotate(
         "N2/N4/N6/bad/down/tbd: {}/{}/{}/{}/{}/{}".format(
             stats["is_gt2h"].sum(),
-            stats["is_gt4h"].sum(),
-            stats["is_gt6h"].sum(),
+            stats["is_gt4h"].sum()-stats["is_gt2h"].sum(),
+            stats["is_gt6h"].sum()-stats["is_gt4h"].sum(),
             count_bad, count_down, count_tbd),
         xy=(0.5, 0.17), xycoords="axes fraction", fontsize=afontsize-2,
         ha="center", va="center",
