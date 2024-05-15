@@ -131,7 +131,7 @@ def isdaytime(x, t1):
 def lfilter(x, y, N=8, Wn=0.05, btype='low', analog=False, output='ba'):
     """ low pass filter """
     b, a = signal.butter(N, Wn, btype=btype, analog=analog, output=output)
-    padlen = np.int(0.3 * len(x))
+    padlen = int(0.3 * len(x))
     yf = signal.filtfilt(b, a, y, padlen=padlen)
     return yf
 
@@ -203,8 +203,15 @@ def plot_sky_brightness(tsky, sky, figfp_sky_brightness, tsqm_town=None, sqm_tow
     return
 
 
-def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png",
-                      wjd0=[], dt_filter=0, fjd_dates=None):
+def plot_sky_goodness(
+        tsky_,
+        sky_,
+        t1,
+        year=2020,
+        figfp_sky_goodness_fmt="./figs/latest_sky_goodness_{}.png",
+        wjd0=[],
+        dt_filter=0,  # in hour
+        fjd_dates=None):
     figfp_sky_goodness = figfp_sky_goodness_fmt.format(year)
 
     # start & end of the year, say 2019
@@ -266,7 +273,9 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
     # initialize the stats
     stats = []
     from collections import OrderedDict
+
     print("------- date-time ----- src counts selected")
+    # loop ever days in this year
     for this_jd in np.arange(fjd0, fjd1):
         this_stat = OrderedDict()
 
@@ -318,7 +327,7 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
             this_stat["sqm_npts"] = npts
 
         if 0 < npts < 10:
-            # worked, but down
+            # monitor worked, but set to down
             this_time_total = this_mn.jd - this_ev.jd
             time_total += this_time_total
             time_down += this_time_total
@@ -341,10 +350,16 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
             this_stat["dt_clear_max"] = 0.
             this_stat["dt_clear_max_start"] = np.nan
             this_stat["dt_clear_max_stop"] = np.nan
+
+            # new stats
+            this_stat["is_gt2h"] = False
+            this_stat["is_gt4h"] = False
+            this_stat["is_gt6h"] = False
+
             stats.append(this_stat)
 
         elif 10 <= npts:
-            # worked, worked
+            # monitor worked, set to worked
 
             # plot background
             plt.plot([this_jd, this_jd], [this_ev.jd - this_jd, this_mn.jd - this_jd], 'gray', lw=lw)
@@ -412,6 +427,12 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
             this_stat["dt_clear_max"] = t_deltamax
             this_stat["dt_clear_max_start"] = t_start_deltamax
             this_stat["dt_clear_max_stop"] = t_stop_deltamax
+
+            # new stats
+            this_stat["is_gt2h"] = t_deltamax > 2/24
+            this_stat["is_gt4h"] = t_deltamax > 4/24
+            this_stat["is_gt6h"] = t_deltamax > 6/24
+
             stats.append(this_stat)
 
         else:
@@ -448,6 +469,7 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
             this_stat["dt_clear_max_stop"] = np.nan
             stats.append(this_stat)
 
+    print(stats)
     ax.set_xlabel("Month")
     ax.set_ylabel("Hour(UT)")
 
@@ -472,16 +494,43 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
 
     ax.set_title("Observing time (Astronomical twilights) stat @ SST")
     afontsize = 20
-    ax.annotate("Done  : {:02.2f}%".format(100 * (1 - time_tbd / time_total)), xy=(0.1, 0.1), xycoords="axes fraction",
-                fontsize=afontsize)
-    ax.annotate("Down  : {:02.2f}%".format(100 * (time_down / (time_work + time_down))), xy=(0.65, 0.1),
-                xycoords="axes fraction", fontsize=afontsize)
-    ax.annotate("Clear  : {:02.2f}%".format(100 * time_good / time_work), xy=(0.1, 0.9), xycoords="axes fraction",
-                fontsize=afontsize)
-    ax.annotate("Cloudy: {:02.2f}%".format(100 * (1 - time_good / time_work)), xy=(0.65, 0.9), xycoords="axes fraction",
-                fontsize=afontsize)
-    ax.annotate("N(photometric/bad/down/tbd): {}/{}/{}/{}".format(count_good, count_bad, count_down, count_tbd),
-                xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
+    ax.annotate(
+        "Done  : {:02.2f}%".format(100 * (1 - time_tbd / time_total)),
+        xy=(0.2, 0.07),
+        xycoords="axes fraction",
+        fontsize=afontsize,
+        ha="center", va="center",
+    )
+    ax.annotate(
+        "Down  : {:02.2f}%".format(100 * (time_down / (time_work + time_down))),
+        xy=(0.8, 0.07),
+        xycoords="axes fraction",
+        fontsize=afontsize,
+        ha="center", va="center",
+    )
+    ax.annotate(
+        "Clear  : {:02.2f}%".format(100 * time_good / time_work),
+        xy=(0.2, 0.9),
+        xycoords="axes fraction",
+        fontsize=afontsize,
+        ha="center", va="center",
+    )
+    ax.annotate(
+        "Cloudy: {:02.2f}%".format(100 * (1 - time_good / time_work)),
+        xy=(0.8, 0.9),
+        xycoords="axes fraction",
+        fontsize=afontsize,
+        ha="center", va="center",
+    )
+    ax.annotate(
+        "N2/N4/N6/bad/down/tbd: {}/{}/{}/{}/{}/{}".format(
+            this_dtstats["is_gt2h"].sum(),
+            this_dtstats["is_gt4h"].sum(),
+            this_dtstats["is_gt6h"].sum(),
+            count_bad, count_down, count_tbd),
+        xy=(0.5, 0.17), xycoords="axes fraction", fontsize=afontsize-2,
+        ha="center", va="center",
+    )
     # ax.annotate("N(photometric/bad/down): {}/{}/{}".format(count_good, count_bad, count_down, count_tbd),
     #             xy=(0.2, 0.02), xycoords="axes fraction", fontsize=afontsize)
 
@@ -499,6 +548,7 @@ def plot_sky_goodness(tsky_, sky_, t1, year=2020, figfp_sky_goodness_fmt="./figs
 
     fig.tight_layout()
 
+    print(f"save figure to {figfp_sky_goodness}")
     fig.savefig(figfp_sky_goodness)
 
     tsky_flagged = Table([Column(tsky.jd, "jd"),
@@ -720,10 +770,11 @@ if __name__ == "__main__":
     # sunmoon data --> deprecated
     datafp_sunmoon = "./data/lhsunmoon.dat"
     # sky brightness data
-    datafp_sqm = ["./latest_data/SQMReadings_20180923.txt",
-                  "./latest_data/SQMReadings.txt",
-                  "./latest_data/sqm_ext.txt",
-                  ]
+    datafp_sqm = [
+        "./latest_data/SQMReadings_20180923.txt",
+        "./latest_data/SQMReadings.txt",
+        "./latest_data/sqm_ext.txt",
+    ]
     datafp_sqm_town = "./latest_data/SQMReadings_lhtown.txt"
     # seeing data
     datafp_seeing = "./latest_data/Seeing_Data.txt"
@@ -755,7 +806,7 @@ if __name__ == "__main__":
     # DEPRECATED: old sunmoon is not enough!
     # t0, t1, t2, t3, tmoon = read_sunmoon(datafp_sunmoon)
 
-    # NEW: caculate sunrise & sunset for site & town
+    # NEW: caculate sunrise & sunset for site & town, but no longer write to file.
     current_year = datetime.datetime.now().year
     print(f"Calculating twilight time from 2017 to {current_year}....")
     sunmoon_site = generate_sunmoon(2017, current_year, **LOC_LH_SITE)
@@ -777,13 +828,13 @@ if __name__ == "__main__":
         print("reading sqm {}".format(_))
         this_sky = read_sky(_, sqmsrc=i)
         sky_list.append(this_sky)
-    # site
+    # SQM at site
     sqm_site = table.vstack(sky_list)
     tsqm_site = Time(sqm_site["isot"].data)
     indsort = np.argsort(tsqm_site.jd)
     sqm_site = sqm_site[indsort]
     tsqm_site = tsqm_site[indsort]
-    # town
+    # SQM at town
     sqm_town = read_sky(datafp_sqm_town)
     tsqm_town = Time(sqm_town["isot"].data)
     indsort = np.argsort(tsqm_town.jd)
@@ -795,10 +846,12 @@ if __name__ == "__main__":
     #     f.write(" now: " + datetime.datetime.now().isoformat() + "\n")
     #     f.write(" last entry: " + tsky[-1].isot + "\n")
 
+    # sky brightness figure
     plot_sky_brightness(tsqm_site, sqm_site, figfp_sky_brightness, tsqm_town, sqm_town)
 
     # year list
     year_list = list(range(2018, current_year + 1))
+
     # sqm goodness (town)
     print(" === SQM FOR TOWN ===")
     tsky_flagged_town = []
@@ -822,7 +875,7 @@ if __name__ == "__main__":
     for year in year_list:
         print("processing sky goodness of year ", year)
         this_tsky_flagged, this_dtstats = plot_sky_goodness(
-            tsqm_site, sqm_site, t1_site, year, figfp_sky_goodness_site_fmt, wjd0=wjd0, dt_filter=0)
+            tsqm_site, sqm_site, t1_site, year, figfp_sky_goodness_site_fmt, wjd0=wjd0, dt_filter=2)
         tsky_flagged_site.append(this_tsky_flagged)
         dtstats_site.append(this_dtstats)
         this_dtstats.write(datafp_dtstats_site_fmt.format(year), overwrite=True)

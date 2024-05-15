@@ -87,5 +87,5 @@ def generate_sunmoon(year0=2017, year1=2022, lon=93.8961, lat=38.6068, elev=4200
 
 if __name__ == "__main__":
     # print(eval_twilight())
-    sunmoon = generate_sunmoon(2017, 2022,)
+    sunmoon = generate_sunmoon(2017, 2024,)
     sunmoon.write()
