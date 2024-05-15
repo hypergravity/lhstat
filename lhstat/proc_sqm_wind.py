@@ -429,9 +429,9 @@ def plot_sky_goodness(
             this_stat["dt_clear_max_stop"] = t_stop_deltamax
 
             # new stats
-            this_stat["is_gt2h"] = t_deltamax > 2/24
-            this_stat["is_gt4h"] = t_deltamax > 4/24
-            this_stat["is_gt6h"] = t_deltamax > 6/24
+            this_stat["is_gt2h"] = t_deltamax >= 2/24
+            this_stat["is_gt4h"] = t_deltamax >= 4/24
+            this_stat["is_gt6h"] = t_deltamax >= 6/24
 
             stats.append(this_stat)
 
@@ -500,6 +500,7 @@ def plot_sky_goodness(
 
     ax.set_title("Observing time (Astronomical twilights) stat @ SST")
     afontsize = 20
+    print(time_good, time_down, time_work, time_tbd, time_total)
     ax.annotate(
         "Done  : {:02.2f}%".format(100 * (1 - time_tbd / time_total)),
         xy=(0.2, 0.07),
@@ -515,14 +516,16 @@ def plot_sky_goodness(
         ha="center", va="center",
     )
     ax.annotate(
-        "Clear  : {:02.2f}%".format(100 * time_good / time_work),
+        "Clear  : {:02.2f}%".format(
+            100 * time_good / time_work if time_work > 0  else 0.),
         xy=(0.2, 0.9),
         xycoords="axes fraction",
         fontsize=afontsize,
         ha="center", va="center",
     )
     ax.annotate(
-        "Cloudy: {:02.2f}%".format(100 * (1 - time_good / time_work)),
+        "Cloudy: {:02.2f}%".format(
+            100 * (1 - time_good / time_work) if time_work > 0  else 1.),
         xy=(0.8, 0.9),
         xycoords="axes fraction",
         fontsize=afontsize,
@@ -908,7 +911,7 @@ if __name__ == "__main__":
         ))
     info_stats = Table(info_stats)
     info_stats.pprint()
-    info_stats.write("./figs/info_stats.csv")
+    info_stats.write("./figs/info_stats.csv", overwrite=True)
 
     """ save dtstats & tsky_flagged """
     table.vstack(dtstats_site).write("./figs/dtstats_all.fits", overwrite=True)
