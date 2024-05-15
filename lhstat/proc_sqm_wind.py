@@ -305,8 +305,19 @@ def plot_sky_goodness(
             this_stat["dt_clear_max"] = this_time_total
             this_stat["dt_clear_max_start"] = this_ev.jd
             this_stat["dt_clear_max_stop"] = this_mn.jd
+
+            # new stats
+            this_stat["is_bad"] = this_time_total < 2/24
+            this_stat["is_gt2h"] = this_time_total >= 2/24
+            this_stat["is_gt4h"] = this_time_total >= 4/24
+            this_stat["is_gt6h"] = this_time_total >= 6/24
+            this_stat["is_work"] = True
+            this_stat["is_down"] = False
+            this_stat["is_tbd"] = False
+
             stats.append(this_stat)
             continue
+
 
         # count sky data in this night
         ind_this_night = (tsky > this_ev) & (tsky < this_mn)
@@ -352,9 +363,13 @@ def plot_sky_goodness(
             this_stat["dt_clear_max_stop"] = np.nan
 
             # new stats
+            this_stat["is_bad"] = False
             this_stat["is_gt2h"] = False
             this_stat["is_gt4h"] = False
             this_stat["is_gt6h"] = False
+            this_stat["is_work"] = False
+            this_stat["is_down"] = True
+            this_stat["is_tbd"] = False
 
             stats.append(this_stat)
 
@@ -429,9 +444,13 @@ def plot_sky_goodness(
             this_stat["dt_clear_max_stop"] = t_stop_deltamax
 
             # new stats
+            this_stat["is_bad"] = t_deltamax < 2/24
             this_stat["is_gt2h"] = t_deltamax >= 2/24
             this_stat["is_gt4h"] = t_deltamax >= 4/24
             this_stat["is_gt6h"] = t_deltamax >= 6/24
+            this_stat["is_work"] = True
+            this_stat["is_down"] = False
+            this_stat["is_tbd"] = False
 
             stats.append(this_stat)
 
@@ -460,8 +479,14 @@ def plot_sky_goodness(
             this_stat["datetime"] = Time(this_jd, format="jd").isot
             if this_ev.jd > jd_now:
                 this_stat["status"] = "tbd"
+                this_stat["is_work"] = False
+                this_stat["is_down"] = False
+                this_stat["is_tbd"] = True
             else:
                 this_stat["status"] = "down"
+                this_stat["is_work"] = False
+                this_stat["is_down"] = True
+                this_stat["is_tbd"] = False
             this_stat["dt_total"] = this_time_total
             this_stat["dt_clear"] = 0
             this_stat["dt_clear_max"] = 0
@@ -469,6 +494,7 @@ def plot_sky_goodness(
             this_stat["dt_clear_max_stop"] = np.nan
 
             # new stats
+            this_stat["is_bad"] = False
             this_stat["is_gt2h"] = False
             this_stat["is_gt4h"] = False
             this_stat["is_gt6h"] = False
@@ -476,6 +502,8 @@ def plot_sky_goodness(
             stats.append(this_stat)
 
     stats = Table(stats)
+    if year == 2024:
+        stats.show_in_browser()
     ax.set_xlabel("Month")
     ax.set_ylabel("Hour(UT)")
 
@@ -533,10 +561,15 @@ def plot_sky_goodness(
     )
     ax.annotate(
         "N2/N4/N6/bad/down/tbd: {}/{}/{}/{}/{}/{}".format(
-            stats["is_gt2h"].sum(),
-            stats["is_gt2h"].sum()-stats["is_gt4h"].sum(),
-            stats["is_gt4h"].sum()-stats["is_gt6h"].sum(),
-            count_bad, count_down, count_tbd),
+
+            stats["is_gt2h"].sum() - stats["is_gt4h"].sum(),
+            stats["is_gt4h"].sum() - stats["is_gt6h"].sum(),
+            stats["is_gt6h"].sum(),
+            stats["is_bad"].sum(),
+            stats["is_down"].sum(),
+            stats["is_tbd"].sum(),
+            # count_bad, count_down, count_tbd,
+        ),
         xy=(0.5, 0.17), xycoords="axes fraction", fontsize=afontsize-2,
         ha="center", va="center",
     )
@@ -884,7 +917,7 @@ if __name__ == "__main__":
     for year in year_list:
         print("processing sky goodness of year ", year)
         this_tsky_flagged, this_dtstats = plot_sky_goodness(
-            tsqm_site, sqm_site, t1_site, year, figfp_sky_goodness_site_fmt, wjd0=wjd0, dt_filter=2)
+            tsqm_site, sqm_site, t1_site, year, figfp_sky_goodness_site_fmt, wjd0=wjd0, dt_filter=0)
         tsky_flagged_site.append(this_tsky_flagged)
         dtstats_site.append(this_dtstats)
         this_dtstats.write(datafp_dtstats_site_fmt.format(year), overwrite=True)
