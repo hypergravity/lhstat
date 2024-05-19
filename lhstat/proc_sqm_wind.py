@@ -337,7 +337,7 @@ def plot_sky_goodness(
             # this_stat["sqm_src_list"] = u_sqmsrc
             this_stat["sqm_npts"] = npts
 
-        if 0 < npts < 10:
+        if 0 < npts < 30:
             # monitor worked, but set to down
             this_time_total = this_mn.jd - this_ev.jd
             time_total += this_time_total
